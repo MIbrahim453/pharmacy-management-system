@@ -1,0 +1,150 @@
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Package, AlertTriangle, Clock, TrendingDown, PackagePlus } from 'lucide-react';
+import { motion } from 'framer-motion';
+import PageHeader from '../../../components/common/PageHeader';
+import { Card } from '../../../components/ui/Card';
+import { Table, Th, Td, TableEmpty } from '../../../components/ui/Table';
+import Badge from '../../../components/ui/Badge';
+import Button from '../../../components/ui/Button';
+import Modal from '../../../components/ui/Modal';
+import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
+import { KPICard } from '../../../components/charts/DashboardStats';
+
+// TODO: Replace with API call — GET /api/admin/medicines
+const INITIAL_MEDICINES = [
+  { name: 'Augmentin 625mg', brand: 'GSK', category: 'Antibiotics', stock: 842, reorder: 100, pricePerTab: 92.0, pricePerStrip: 552, pricePerPack: 1840, expiry: 'Jan 2026', status: 'In stock', exp: 'ok' },
+  { name: 'Panadol Extra', brand: 'GSK', category: 'Analgesics', stock: 148, reorder: 50, pricePerTab: 12.5, pricePerStrip: 150, pricePerPack: 500, expiry: 'Mar 2025', status: 'Low stock', exp: 'warn' },
+  { name: 'Concor 5mg', brand: 'Merck', category: 'Cardiac', stock: 612, reorder: 100, pricePerTab: 34.0, pricePerStrip: 340, pricePerPack: 1360, expiry: 'Jun 2025', status: 'In stock', exp: 'ok' },
+  { name: 'Brufen 400mg', brand: 'Abbott', category: 'Analgesics', stock: 36, reorder: 200, pricePerTab: 8.2, pricePerStrip: 82, pricePerPack: 410, expiry: 'Feb 2024', status: 'Critical', exp: 'err' },
+  { name: 'Neurobion Forte', brand: 'Merck', category: 'Vitamins', stock: 421, reorder: 80, pricePerTab: 62.0, pricePerStrip: 620, pricePerPack: 2480, expiry: 'Dec 2025', status: 'In stock', exp: 'ok' },
+];
+
+// TODO: Replace with API call — GET /api/admin/suppliers (for dropdown)
+const SUPPLIER_NAMES = ['GSK Pakistan', 'Abbott Pakistan', 'Merck Pakistan', 'Sanofi Pakistan'];
+
+export default function Inventory() {
+  const [medicines, setMedicines] = useState(INITIAL_MEDICINES);
+  const [activeTab, setActiveTab] = useState('all');
+  const [orderModal, setOrderModal] = useState(false);
+  const [orderForm, setOrderForm] = useState({ supplierName: '', medicineName: '', quantity: '', paymentMethod: 'Bank Transfer' });
+  const [stockModal, setStockModal] = useState(false);
+  const [stockForm, setStockForm] = useState({ name: '', stock: '' });
+  const [loading, setLoading] = useState(false);
+
+  const lowStock = medicines.filter((m) => m.stock > 0 && m.stock < m.reorder);
+  const expired = medicines.filter((m) => m.status === 'Expired' || m.exp === 'err');
+  const expiringSoon = medicines.filter((m) => m.exp === 'warn');
+  const inStock = medicines.filter((m) => m.stock >= m.reorder);
+
+  const TABS = [
+    { key: 'all', label: 'All', data: medicines },
+    { key: 'low', label: `Low stock (${lowStock.length})`, data: lowStock },
+    { key: 'expiring', label: `Expiring soon (${expiringSoon.length})`, data: expiringSoon },
+    { key: 'expired', label: `Expired (${expired.length})`, data: expired },
+  ];
+  const current = TABS.find((t) => t.key === activeTab)?.data || medicines;
+  const oField = (k, v) => setOrderForm((f) => ({ ...f, [k]: v }));
+
+  const openReorder = (m) => {
+    setOrderForm({ supplierName: SUPPLIER_NAMES[0], medicineName: m.name, quantity: String(m.reorder), paymentMethod: 'Bank Transfer' });
+    setOrderModal(true);
+  };
+
+  const handleOrder = async (e) => {
+    e.preventDefault(); setLoading(true);
+    await new Promise((r) => setTimeout(r, 700));
+    // TODO: POST /api/admin/orders
+    toast.success(`Reorder placed: ${orderForm.quantity} units of ${orderForm.medicineName} from ${orderForm.supplierName}`);
+    setOrderModal(false); setLoading(false);
+  };
+
+  const openStockUpdate = (m) => { setStockForm({ name: m.name, stock: String(m.stock) }); setStockModal(true); };
+
+  const handleStockUpdate = async (e) => {
+    e.preventDefault(); setLoading(true);
+    await new Promise((r) => setTimeout(r, 500));
+    // TODO: PATCH /api/admin/medicines/:id/stock
+    setMedicines((prev) => prev.map((m) => m.name === stockForm.name ? { ...m, stock: +stockForm.stock } : m));
+    toast.success(`${stockForm.name} stock updated to ${stockForm.stock} packs`);
+    setStockModal(false); setLoading(false);
+  };
+
+  return (
+    <>
+      <PageHeader title="Inventory" subtitle="Monitor stock levels, expiry dates and reorder alerts."
+        actions={<Button size="sm" onClick={() => toast.info('Generating inventory report…')}>Export report</Button>} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <KPICard icon={<Package size={18} />} value={inStock.length.toString()} label="In stock" tone="success" />
+        <KPICard icon={<TrendingDown size={18} />} value={lowStock.length.toString()} label="Below reorder level" tone="warning" />
+        <KPICard icon={<Clock size={18} />} value={expiringSoon.length.toString()} label="Expiring in 30 days" tone="info" />
+        <KPICard icon={<AlertTriangle size={18} />} value={expired.length.toString()} label="Expired — remove" tone="danger" />
+      </div>
+
+      <Card>
+        <div className="flex border-b border-outline-variant/60 px-5">
+          {TABS.map((t) => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              className={`py-3 px-1 mr-6 text-sm font-medium border-b-2 -mb-px transition-colors ${t.key === activeTab ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <Table>
+          <thead><tr>
+            <Th>Medicine</Th><Th>Category</Th><Th align="right">Stock (Packs)</Th>
+            <Th align="right">Reorder</Th><Th>Expiry</Th><Th>Status</Th><Th>Actions</Th>
+          </tr></thead>
+          <tbody>
+            {current.length === 0
+              ? <TableEmpty cols={7} message="No items in this category" icon={<Package size={28} />} />
+              : current.map((m, i) => (
+                <motion.tr key={m.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+                  <Td>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-[10px] font-bold">{m.name.slice(0, 2).toUpperCase()}</div>
+                      <div><div className="text-sm font-semibold text-on-surface">{m.name}</div><div className="text-xs text-on-surface-variant">{m.brand}</div></div>
+                    </div>
+                  </Td>
+                  <Td><Badge variant="default">{m.category}</Badge></Td>
+                  <Td align="right"><span className={`text-sm font-semibold tnum ${m.stock === 0 ? 'text-error' : m.stock < m.reorder ? 'text-warning' : 'text-on-surface'}`}>{m.stock.toLocaleString()}</span></Td>
+                  <Td align="right" className="text-sm text-on-surface-variant tnum">{m.reorder}</Td>
+                  <Td className={`text-sm ${m.exp === 'err' ? 'text-error font-semibold' : m.exp === 'warn' ? 'text-warning' : 'text-on-surface-variant'}`}>{m.expiry}</Td>
+                  <Td><Badge status={m.status} dot /></Td>
+                  <Td>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openStockUpdate(m)} className="btn-ghost p-1.5 rounded-lg" title="Update stock"><PackagePlus size={15} /></button>
+                      <button onClick={() => openReorder(m)} className="btn-ghost px-2 py-1 text-xs rounded-lg">Reorder</button>
+                    </div>
+                  </Td>
+                </motion.tr>
+              ))
+            }
+          </tbody>
+        </Table>
+      </Card>
+
+      {/* Reorder Modal */}
+      <Modal open={orderModal} onClose={() => setOrderModal(false)} title="Reorder Medicine" subtitle="Place a restock order with a supplier."
+        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setOrderModal(false)}>Cancel</Button><Button form="reorder-form" type="submit" loading={loading}>Place order</Button></div>}>
+        <form id="reorder-form" onSubmit={handleOrder} className="p-6 space-y-4">
+          <Select label="Supplier name" value={orderForm.supplierName} onChange={(e) => oField('supplierName', e.target.value)} options={SUPPLIER_NAMES} />
+          <Input label="Medicine name" value={orderForm.medicineName} disabled />
+          <Input label="Quantity" type="number" value={orderForm.quantity} onChange={(e) => oField('quantity', e.target.value)} required min="1" />
+          <Select label="Payment method" value={orderForm.paymentMethod} onChange={(e) => oField('paymentMethod', e.target.value)} options={['Bank Transfer', 'Cheque', 'Cash', 'Credit']} />
+        </form>
+      </Modal>
+
+      {/* Update Stock Modal */}
+      <Modal open={stockModal} onClose={() => setStockModal(false)} title="Update Stock" subtitle={`Adjust pack quantity for ${stockForm.name}`}
+        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setStockModal(false)}>Cancel</Button><Button form="stock-form" type="submit" loading={loading}>Update stock</Button></div>}>
+        <form id="stock-form" onSubmit={handleStockUpdate} className="p-6 space-y-4">
+          <Input label="Medicine name" value={stockForm.name} disabled />
+          <Input label="Stock quantity (packs)" type="number" value={stockForm.stock} onChange={(e) => setStockForm((f) => ({ ...f, stock: e.target.value }))} required min="0" />
+        </form>
+      </Modal>
+    </>
+  );
+}
