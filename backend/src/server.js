@@ -3,6 +3,7 @@ import { connectDB } from "./config/db.js";
 import { config } from "./config/index.js";
 import dns from "dns";
 import logger from "./utils/logger.js";
+import seedRoles from "./database/seed/role.seed.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -10,8 +11,10 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("Database connected to server");
-
-    const server = app.listen(config.port, () => "Server Started Successfully");
+    await seedRoles()
+    const server = app.listen(config.port, () => {
+       logger.info(`Server running on port ${config.port}`);
+    });
 
     let isShuttingDown = false;
 
