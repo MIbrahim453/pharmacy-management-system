@@ -26,12 +26,6 @@ const config = {
     rememberMeExpiry: process.env.JWT_REFRESH_SECRET_EXPIRES_IN_REMEMBER_ME,
   },
 
-  //Google
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  },
-
   //Logs
   log: {
     logLevel: process.env.LOG_LEVEL || "info",

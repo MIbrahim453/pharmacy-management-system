@@ -15,7 +15,13 @@ const registerStaffValidation = joi.object({
     pharmacyId: joi.string().required()
 })
 
+const loginValidation = joi.object({
+    email: joi.string().email().required(),
+    password: joi.string().required()
+})
+
 export {
     registerAdminValidation,
-    registerStaffValidation
+    registerStaffValidation,
+    loginValidation
 }
