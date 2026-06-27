@@ -44,7 +44,7 @@ const createAdmin = async (user, data) => {
     city,
     registrationNumber,
     owner: admin._id,
-    createdBy: null,
+    createdBy: user.id,
   });
 
   admin.pharmacyId = pharmacy._id;
