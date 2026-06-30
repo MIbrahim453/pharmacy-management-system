@@ -1,22 +1,46 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Mail, ArrowLeft, Stethoscope, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Stethoscope, CheckCircle, AlertCircle } from 'lucide-react';
+import api from '../../../services/axios';
+import { yupResolver, forgotPasswordSchema } from '../../../utils/validation';
 import Button from '../../../components/ui/Button';
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
+  });
+
+  const onSubmit = async (data) => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSent(true);
-    toast.success('Reset link sent! Check your inbox.');
-    setLoading(false);
+    setApiError('');
+    try {
+      const response = await api.post('/auth/forgot-password', { email: data.email });
+      setSubmittedEmail(data.email);
+      setSent(true);
+      toast.success(response.data?.message || 'Reset link sent! Check your inbox.');
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to send reset link';
+      setApiError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +66,7 @@ export default function ForgotPassword() {
             </div>
             <h2 className="text-xl font-bold text-on-surface">Check your inbox</h2>
             <p className="mt-2 text-sm text-on-surface-variant">
-              We sent a password reset link to <strong className="text-on-surface-variant">{email}</strong>
+              We sent a password reset link to <strong className="text-on-surface">{submittedEmail}</strong>. Please check your spam folder if you do not receive it within a few minutes.
             </p>
             <Link to="/login" className="mt-6 btn-primary inline-flex justify-center w-full">
               Back to login
@@ -54,20 +78,28 @@ export default function ForgotPassword() {
             <p className="mt-1.5 text-sm text-on-surface-variant">
               Enter your email address and we'll send you a reset link.
             </p>
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+              {apiError && (
+                <div className="flex items-start gap-2 rounded-xl bg-error/[0.08] border border-error/30 p-3 text-xs text-error">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                  {apiError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-on-surface-variant">Email</label>
                 <div className="relative">
                   <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    {...register('email')}
                     className="input-base pl-10"
                     placeholder="you@pharmacy.pk"
-                    required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-error font-medium mt-1">{errors.email.message}</p>
+                )}
               </div>
               <Button type="submit" className="w-full justify-center" loading={loading}>
                 Send reset link

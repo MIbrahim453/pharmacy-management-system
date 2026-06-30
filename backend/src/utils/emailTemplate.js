@@ -1,4 +1,4 @@
-const baseStyles = `
+﻿const baseStyles = `
   margin: 0;
   padding: 0;
   background-color: #f5f7fb;
@@ -209,4 +209,67 @@ const staffEmailTemplate = ({
     loginUrl,
   });
 
-export { adminEmailTemplate, staffEmailTemplate };
+const resetPasswordEmailTemplate = ({
+  name,
+  email,
+  resetLink,
+  expiryMinutes = 15,
+}) => `
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Reset Request</title>
+  </head>
+  <body style="${baseStyles}">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${cardStyles}">
+            <tr>
+              <td style="${headerStyles}">
+                <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Password Recovery</div>
+                <h1 style="margin: 8px 0 0; font-size: 28px; line-height: 1.2;">Reset Your Password</h1>
+                <p style="margin: 12px 0 0; font-size: 15px; line-height: 1.7; opacity: 0.95;">Use the secure link below to create a new password.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="${bodyStyles}">
+                <h2 style="${sectionTitleStyles}">Hello ${name},</h2>
+                <p style="${textStyles}">
+                  We received a request to reset the password for your account (${email}). If you made this request, click the button below to choose a new password.
+                </p>
+
+                <a href="${resetLink}" style="${buttonStyles}">Reset Password</a>
+
+                <div style="${infoBoxStyles}">
+                  <div style="${rowStyles}"><span style="${labelStyles}">Email</span> ${email}</div>
+                  <div style="${lastRowStyles}"><span style="${labelStyles}">Link Expires</span> ${expiryMinutes} minutes</div>
+                </div>
+
+                <p style="${textStyles}">
+                  If the button does not work, copy and paste this link into your browser:
+                </p>
+                <p style="${textStyles}; word-break: break-all;">
+                  <a href="${resetLink}" style="color: #0f766e;">${resetLink}</a>
+                </p>
+
+                <p style="${textStyles}">
+                  If you did not request a password reset, you can ignore this email and your password will remain unchanged.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+export {
+  adminEmailTemplate,
+  staffEmailTemplate,
+  resetPasswordEmailTemplate,
+};

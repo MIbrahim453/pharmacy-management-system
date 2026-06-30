@@ -1,11 +1,24 @@
-﻿import express from "express";
-import { loginUsers, signUpAdmin, signUpStaff } from "./auth.controller.js";
+import express from "express";
+import {
+  loginUsers,
+  refreshAccessToken,
+  signUpAdmin,
+  signUpStaff,
+  forgotPasswordUser,
+  resetPasswordUser,
+  changePasswordUser,
+  getUser,
+  updateProfileUser,
+} from "./auth.controller.js";
 import authorizeRole from "../../middlewares/rbac.js";
 import validate from "../../middlewares/validation.js";
 import {
   registerAdminValidation,
   registerStaffValidation,
   loginValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
+  profileValidation,
 } from "./auth.validation.js";
 import { authenticate, authenticateLocal } from "../../middlewares/auth.js";
 
@@ -27,11 +40,24 @@ router.post(
   signUpStaff,
 );
 
+router.post("/login", validate(loginValidation), authenticateLocal, loginUsers);
+
+router.post("/refresh-token", refreshAccessToken);
+
 router.post(
-  "/login",
-  validate(loginValidation),
-  authenticateLocal,
-  loginUsers,
+  "/forgot-password",
+  validate(forgotPasswordValidation),
+  forgotPasswordUser,
 );
+
+router.post(
+  "/reset-password/:token",
+  validate(resetPasswordValidation),
+  resetPasswordUser,
+);
+
+router.post("/change-password", authenticate, changePasswordUser);
+router.get("/me", authenticate, getUser);
+router.put("/profile", authenticate, validate(profileValidation), updateProfileUser);
 
 export default router;

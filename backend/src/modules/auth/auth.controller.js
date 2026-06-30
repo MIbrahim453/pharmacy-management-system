@@ -1,4 +1,14 @@
-﻿import { createAdmin, createStaff, login } from "./auth.service.js";
+import {
+  createAdmin,
+  createStaff,
+  login,
+  refreshToken,
+  forgetPassword,
+  resetPassword,
+  changePassword,
+  getMe,
+  updateProfile,
+} from "./auth.service.js";
 import { sendCreated, sendSuccess } from "../../utils/response.js";
 
 const signUpAdmin = async (req, res, next) => {
@@ -28,8 +38,67 @@ const loginUsers = async (req, res, next) => {
   }
 };
 
+const refreshAccessToken = async (req, res, next) => {
+  try {
+    const result = await refreshToken(req.body.refreshToken);
+    return sendSuccess(res, result, "Token Refreshed Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const forgotPasswordUser = async (req, res, next) => {
+  try {
+    const result = await forgetPassword(req.body.email);
+    return sendSuccess(res, result, "Password reset link sent successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPasswordUser = async (req, res, next ) => {
+  try {
+    const result = await resetPassword(req.params.token, req.body.password);
+    return sendSuccess(res, result, "Password reset successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const changePasswordUser = async (req, res, next) => {
+  try {
+    const result = await changePassword(req.user.id, req.body.oldPassword, req.body.newPassword)
+    return sendSuccess(res, result, "Password changed successfully");
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getUser = async (req, res, next) => {
+  try {
+    const result = await getMe(req.user.id)
+    return sendSuccess(res, result, "User Fetched Successfully")
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateProfileUser = async (req, res, next) => {
+  try {
+    const result = await updateProfile(req.user.id, req.body)
+    return sendSuccess(res, result, "User Profile Updated Successfully")
+  } catch (error) {
+    next(error)
+  }
+}
 export {
   signUpAdmin,
   signUpStaff,
   loginUsers,
+  refreshAccessToken,
+  forgotPasswordUser,
+  resetPasswordUser,
+  changePasswordUser,
+  getUser,
+  updateProfileUser,
 };

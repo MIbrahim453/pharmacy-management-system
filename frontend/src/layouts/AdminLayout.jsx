@@ -1,6 +1,8 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useLayoutEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutUser } from '../store/authSlice';
 import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 
@@ -16,16 +18,22 @@ const PAGE_META = {
   '/admin/profile':    { title: 'Profile',      crumb: 'Admin' },
 };
 
-export default function AdminLayout({ children, onLogout }) {
+export default function AdminLayout({ children }) {
   const { pathname } = useLocation();
   const meta = PAGE_META[pathname] || { title: 'Admin', crumb: '' };
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
 
   useLayoutEffect(() => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   }, [pathname]);
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+  };
 
   return (
     <div className="min-h-dvh bg-background">
@@ -34,9 +42,9 @@ export default function AdminLayout({ children, onLogout }) {
         onClose={() => setSidebarOpen(false)}
         onToggleExpand={() => setSidebarOpen(true)}
         role="admin"
-        userName="Ayesha Khan"
-        userEmail="admin@crescentcare.pk"
-        onLogout={onLogout}
+        userName={user?.name || "Admin"}
+        userEmail={user?.email || ""}
+        onLogout={handleLogout}
       />
       <div className={`app-shell transition-all duration-200 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-[68px]'}`}>
         <Header title={meta.title} crumb={meta.crumb} />

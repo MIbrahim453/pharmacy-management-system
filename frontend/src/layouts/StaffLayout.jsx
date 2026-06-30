@@ -1,6 +1,8 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useLayoutEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutUser } from '../store/authSlice';
 import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 
@@ -10,16 +12,22 @@ const PAGE_META = {
   '/staff/profile': { title: 'My Profile', crumb: 'Staff' },
 };
 
-export default function StaffLayout({ children, onLogout }) {
+export default function StaffLayout({ children }) {
   const { pathname } = useLocation();
   const meta = PAGE_META[pathname] || { title: 'Staff', crumb: '' };
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
 
   useLayoutEffect(() => {
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   }, [pathname]);
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+  };
 
   return (
     <div className="min-h-dvh bg-background">
@@ -28,9 +36,9 @@ export default function StaffLayout({ children, onLogout }) {
         onClose={() => setSidebarOpen(false)}
         onToggleExpand={() => setSidebarOpen(true)}
         role="staff"
-        userName="Rabia Saleem"
-        userEmail="staff@crescentcare.pk"
-        onLogout={onLogout}
+        userName={user?.name || "Staff"}
+        userEmail={user?.email || ""}
+        onLogout={handleLogout}
       />
       <div className={`app-shell transition-all duration-200 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-[68px]'}`}>
         <Header title={meta.title} crumb={meta.crumb} />

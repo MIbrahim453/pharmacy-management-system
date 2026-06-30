@@ -1,4 +1,11 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { checkAuth } from './store/authSlice';
+
+// Route Protection Components
+import ProtectedRoute from './components/common/ProtectedRoute';
+import PublicRoute from './components/common/PublicRoute';
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
@@ -34,43 +41,45 @@ import Billing from './features/pos/pages/Billing';
 import Profile from './features/profile/pages/Profile';
 
 function App() {
-  const handleLogout = () => {
-    // Local logout functionality if needed
-  };
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   return (
     <Routes>
       {/* Auth / Public Routes */}
-      <Route path="/login" element={<AuthLayout><Login onLogin={() => { }} /></AuthLayout>} />
-      <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
-      <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
+      <Route path="/login" element={<PublicRoute><AuthLayout><Login /></AuthLayout></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><AuthLayout><ForgotPassword /></AuthLayout></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><AuthLayout><ResetPassword /></AuthLayout></PublicRoute>} />
 
       {/* Super Admin Routes */}
-      <Route path="/super-admin/dashboard" element={<SuperAdminLayout onLogout={handleLogout}><SuperDashboard /></SuperAdminLayout>} />
-      <Route path="/super-admin/pharmacies" element={<SuperAdminLayout><Pharmacies /></SuperAdminLayout>} />
-      <Route path="/super-admin/users" element={<SuperAdminLayout><SuperUsers /></SuperAdminLayout>} />
-      <Route path="/super-admin/analytics" element={<SuperAdminLayout><Analytics /></SuperAdminLayout>} />
-      <Route path="/super-admin/profile" element={<SuperAdminLayout><Profile /></SuperAdminLayout>} />
+      <Route path="/super-admin/dashboard" element={<ProtectedRoute allowedRoles={['super']}><SuperAdminLayout><SuperDashboard /></SuperAdminLayout></ProtectedRoute>} />
+      <Route path="/super-admin/pharmacies" element={<ProtectedRoute allowedRoles={['super']}><SuperAdminLayout><Pharmacies /></SuperAdminLayout></ProtectedRoute>} />
+      <Route path="/super-admin/users" element={<ProtectedRoute allowedRoles={['super']}><SuperAdminLayout><SuperUsers /></SuperAdminLayout></ProtectedRoute>} />
+      <Route path="/super-admin/analytics" element={<ProtectedRoute allowedRoles={['super']}><SuperAdminLayout><Analytics /></SuperAdminLayout></ProtectedRoute>} />
+      <Route path="/super-admin/profile" element={<ProtectedRoute allowedRoles={['super']}><SuperAdminLayout><Profile /></SuperAdminLayout></ProtectedRoute>} />
 
       {/* Admin Routes */}
-      <Route path="/admin/dashboard" element={<AdminLayout onLogout={handleLogout}><AdminDashboard /></AdminLayout>} />
-      <Route path="/admin/medicines" element={<AdminLayout><Medicines /></AdminLayout>} />
-      <Route path="/admin/suppliers" element={<AdminLayout><Suppliers /></AdminLayout>} />
-      <Route path="/admin/staff" element={<AdminLayout><Staff /></AdminLayout>} />
-      <Route path="/admin/inventory" element={<AdminLayout><Inventory /></AdminLayout>} />
-      <Route path="/admin/invoices" element={<AdminLayout><Invoices /></AdminLayout>} />
-      <Route path="/admin/payments" element={<AdminLayout><Payments /></AdminLayout>} />
-      <Route path="/admin/reports" element={<AdminLayout><Reports /></AdminLayout>} />
-      <Route path="/admin/profile" element={<AdminLayout><Profile /></AdminLayout>} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/medicines" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Medicines /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/suppliers" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Suppliers /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Staff /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/inventory" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Invoices /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Payments /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Profile /></AdminLayout></ProtectedRoute>} />
 
       {/* Staff Routes */}
-      <Route path="/staff/billing" element={<StaffLayout onLogout={handleLogout}><Billing /></StaffLayout>} />
-      <Route path="/staff/invoices" element={<StaffLayout><Invoices /></StaffLayout>} />
-      <Route path="/staff/profile" element={<StaffLayout><Profile /></StaffLayout>} />
+      <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['staff']}><StaffLayout><Billing /></StaffLayout></ProtectedRoute>} />
+      <Route path="/staff/invoices" element={<ProtectedRoute allowedRoles={['staff']}><StaffLayout><Invoices /></StaffLayout></ProtectedRoute>} />
+      <Route path="/staff/profile" element={<ProtectedRoute allowedRoles={['staff']}><StaffLayout><Profile /></StaffLayout></ProtectedRoute>} />
 
       {/* Default Routes */}
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
+      <Route path="*" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
     </Routes>
   );
 }

@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Mail, Lock, Eye, EyeOff, Sun, Moon, Stethoscope,
-  ShieldCheck, TrendingUp, Users, AlertCircle, Copy,
+  ShieldCheck, TrendingUp, Users, AlertCircle,
 } from 'lucide-react';
-import { useTheme } from '../../../context/ThemeProvider';
+import { useTheme } from '../../../hooks/useTheme';
+import { loginUser, clearError } from '../../../store/authSlice';
+import { yupResolver, loginSchema } from '../../../utils/validation';
 import Button from '../../../components/ui/Button';
 
 const FEATURES = [
@@ -15,65 +19,44 @@ const FEATURES = [
   { icon: <Users size={18} />, text: 'Multi-pharmacy management' },
 ];
 
-const DEMO_ACCOUNTS = [
-  {
-    role: 'super',
-    label: 'Super Admin',
-    email: 'superadmin@apothex.app',
-    password: 'Super@123',
-    user: { name: 'Ibrahim Qureshi', email: 'superadmin@apothex.app', pharmacy: 'Platform' },
-  },
-  {
-    role: 'admin',
-    label: 'Admin',
-    email: 'admin@crescentcare.pk',
-    password: 'Admin@123',
-    user: { name: 'Ayesha Khan', email: 'admin@crescentcare.pk', pharmacy: 'Crescent Care Pharmacy' },
-  },
-  {
-    role: 'staff',
-    label: 'Staff',
-    email: 'staff@crescentcare.pk',
-    password: 'Staff@123',
-    user: { name: 'Rabia Saleem', email: 'staff@crescentcare.pk', pharmacy: 'Crescent Care Pharmacy' },
-  },
-];
-
-export default function Login({ onLogin }) {
+export default function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { mode, toggleTheme } = useTheme();
   const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [pw, setPw] = useState('');
-  const [error, setError] = useState('');
 
-  const fillCredentials = (account) => {
-    setEmail(account.email);
-    setPw(account.password);
-    setError('');
-  };
+  const { loading, error } = useSelector((state) => state.auth);
 
-  const signIn = async (e) => {
-    e?.preventDefault();
-    setError('');
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
-    const account = DEMO_ACCOUNTS.find(
-      (a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === pw,
-    );
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
-    if (!account) {
-      setError('Invalid email or password. Use one of the demo credentials below.');
-      setLoading(false);
-      return;
+  const onSubmit = async (data) => {
+    dispatch(clearError());
+    const result = await dispatch(loginUser({ email: data.email, password: data.password }));
+
+    if (loginUser.fulfilled.match(result)) {
+      const user = result.payload;
+      toast.success(`Welcome back, ${user.name.split(' ')[0]}!`);
+      const defaultPath =
+        user.role === 'super'
+          ? '/super-admin/dashboard'
+          : user.role === 'admin'
+          ? '/admin/dashboard'
+          : '/staff/billing';
+      navigate(defaultPath);
+    } else {
+      toast.error(result.payload || 'Invalid email or password');
     }
-
-    onLogin(account.role);
-    toast.success(`Welcome back, ${account.user.name.split(' ')[0]}!`);
-    navigate(account.role === 'super' ? '/super-admin/dashboard' : account.role === 'admin' ? '/admin/dashboard' : '/staff/billing');
-    setLoading(false);
   };
 
   return (
@@ -159,7 +142,7 @@ export default function Login({ onLogin }) {
               Sign in to your Pharmacy OS workspace.
             </p>
 
-            <form onSubmit={signIn} className="mt-8 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
               {error && (
                 <div className="flex items-start gap-2 rounded-xl bg-error/[0.08] border border-error/30 p-3 text-xs text-error">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />
@@ -173,13 +156,14 @@ export default function Login({ onLogin }) {
                   <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    {...register('email')}
                     className="input-base pl-10"
                     placeholder="you@pharmacy.pk"
-                    required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-error font-medium mt-1">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -193,11 +177,9 @@ export default function Login({ onLogin }) {
                   <Lock size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant/70" />
                   <input
                     type={showPw ? 'text' : 'password'}
-                    value={pw}
-                    onChange={(e) => setPw(e.target.value)}
+                    {...register('password')}
                     className="input-base pl-10 pr-10"
                     placeholder="••••••••"
-                    required
                   />
                   <button
                     type="button"
@@ -207,6 +189,9 @@ export default function Login({ onLogin }) {
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-error font-medium mt-1">{errors.password.message}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -214,53 +199,10 @@ export default function Login({ onLogin }) {
                 <label htmlFor="remember" className="text-sm text-on-surface-variant">Remember me</label>
               </div>
 
-              <Button type="submit" className="w-full justify-center" loading={loading} size="lg">
+              <Button type="submit" className="w-full justify-center mt-2" loading={loading} size="lg">
                 Sign in
               </Button>
-
-              <div className="relative py-1">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-outline-variant" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-surface px-3 text-on-surface-variant/70">or continue with</span>
-                </div>
-              </div>
-
-              <button type="button" className="btn-secondary w-full justify-center gap-2.5">
-                <svg width="16" height="16" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6c1.9-5.6 7.1-9.8 13.6-9.8z" />
-                  <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 6.9l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.9z" />
-                  <path fill="#FBBC05" d="M10.4 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-3 .8-4.3l-7.8-6C1 16.9 0 20.3 0 24s1 7.1 2.6 10.3l7.8-6z" />
-                  <path fill="#34A853" d="M24 48c6.2 0 11.5-2 15.3-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.2 2.2-6.5 0-11.7-4.2-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z" />
-                </svg>
-                Sign in with Google
-              </button>
             </form>
-
-            {/* Demo credentials reference */}
-            <div className="mt-8">
-              <p className="text-center text-xs text-on-surface-variant/70 mb-3">
-                Demo credentials — tap a role to autofill
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {DEMO_ACCOUNTS.map((a) => (
-                  <button
-                    key={a.role}
-                    type="button"
-                    onClick={() => fillCredentials(a)}
-                    className="group flex flex-col items-start gap-1 rounded-xl border border-outline-variant p-3 text-left hover:border-primary/40 hover:bg-primary/[0.08] transition-all"
-                  >
-                    <span className="flex items-center gap-1.5 text-[11px] font-semibold text-on-surface">
-                      {a.label}
-                      <Copy size={11} className="text-on-surface-variant/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant break-all">{a.email}</span>
-                    <span className="text-[10px] text-on-surface-variant/70 font-mono">{a.password}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <p className="mt-8 text-center text-xs text-on-surface-variant/70 leading-relaxed">
               Accounts are provisioned by your administrator.<br />
