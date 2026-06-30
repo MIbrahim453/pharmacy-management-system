@@ -1,0 +1,72 @@
+import Pharmacy from "../../../database/models/pharmacy.model.js";
+import { NotFoundError, BadRequestError } from "../../../utils/errors.js";
+import logger from "../../../utils/logger.js";
+
+const editPharmacy = async (id, data) => {
+  const pharmacy = await Pharmacy.findById(id);
+  if (!pharmacy) {
+    throw new NotFoundError("Pharmacy not Found");
+  }
+
+  const editedPharmacy = await Pharmacy.findByIdAndUpdate(
+    id,
+    {
+      $set: { ...data },
+    },
+    {
+      new: true,
+    },
+  );
+
+  logger.info("Pharmacy Updated Successfully");
+
+  return editedPharmacy;
+};
+
+const deletePharmacy = async (id) => {
+  const deletedPharmacy = await Pharmacy.findByIdAndDelete(id);
+
+  if (!deletedPharmacy) {
+    throw new BadRequestError("Failed To delete Pharmacy");
+  }
+
+  logger.info("Pharmacy Deleted Successfully");
+};
+
+const viewPharmacy = async (id) => {
+  const pharmacy = await Pharmacy.findById(id);
+
+  if (!pharmacy) {
+    throw new NotFoundError("Pharmacy Not Found");
+  }
+
+  logger.info("Pharmacy Fetched Successfully");
+
+  return pharmacy;
+};
+
+const getPharmacies = async (filters) => {
+  const { id, pharmacy_name, city, startIndex, limit, order, searchTerm } =
+    filters;
+  const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
+  const pharmacies = await Pharmacy.find({
+    $or: [
+      { pharmacy_name: { $regex: searchTerm || "", $options: "i" } },
+      { city: { $regex: searchTerm || "", $options: "i" } },
+    ],
+    ...(id && { _id: id }),
+    ...(pharmacy_name && { pharmacy_name: pharmacy_name }),
+    ...(city && { city: city }),
+  })
+    .skip(startIndex)
+    .limit(limit)
+    .sort({ updatedAt: sortDirection })
+    .populate("owner", "-password")
+    .populate("createdBy", "-password");
+
+  logger.info("Pharmacies Fetched Successfully");
+
+  return pharmacies;
+};
+
+export { editPharmacy, deletePharmacy, viewPharmacy, getPharmacies };

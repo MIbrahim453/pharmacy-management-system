@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Building2, Search, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Building2, Eye, Pencil, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../../components/common/PageHeader';
 import SearchBar from '../../../components/common/SearchBar';
@@ -12,23 +13,13 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
-// TODO: Replace with API call — GET /api/super-admin/pharmacies
-const INITIAL_PHARMACIES = [
-  { name: 'MedPoint Karachi', admin: 'Ahmed Raza', email: 'ahmed@medpoint.pk', city: 'Karachi', users: 8, status: 'Active' },
-  { name: 'LifeCare Lahore', admin: 'Sara Khan', email: 'sara@lifecare.pk', city: 'Lahore', users: 5, status: 'Active' },
-  { name: 'PharmaPlus ISB', admin: 'Usman Ali', email: 'usman@pharmaplus.pk', city: 'Islamabad', users: 3, status: 'Active' },
-  { name: 'CureMart Faisalabad', admin: 'Zainab Mir', email: 'zainab@curemart.pk', city: 'Faisalabad', users: 4, status: 'Suspended' },
-  { name: 'HealthHub Karachi', admin: 'Bilal Hassan', email: 'bilal@healthhub.pk', city: 'Karachi', users: 6, status: 'Active' },
-];
-
-
+import api from '../../../services/axios';
+import { yupResolver, onboardPharmacySchema, editPharmacySchema } from '../../../utils/validation';
 
 const PER_PAGE = 8;
-const BLANK = { name: '', admin: '', email: '', city: '', status: 'Active', users: '1' };
 
 export default function PharmaciesPage() {
-  const [list, setList] = useState(INITIAL_PHARMACIES);
-
+  const [list, setList] = useState([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(false);
@@ -36,75 +27,128 @@ export default function PharmaciesPage() {
   const [viewModal, setViewModal] = useState(false);
   const [delModal, setDelModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(BLANK);
   const [selected, setSelected] = useState(null);
 
-  const filtered = list.filter((p) =>
-    p.name.toLowerCase().includes(query.toLowerCase()) ||
-    p.admin.toLowerCase().includes(query.toLowerCase()) ||
-    p.city.toLowerCase().includes(query.toLowerCase()),
-  );
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // Onboard form configuration
+  const {
+    register: registerOnboard,
+    handleSubmit: handleSubmitOnboard,
+    reset: resetOnboard,
+    formState: { errors: onboardErrors },
+  } = useForm({
+    resolver: yupResolver(onboardPharmacySchema),
+    defaultValues: { pharmacyName: '', name: '', email: '', city: '', registrationNumber: '' },
+  });
 
-  const field = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // Edit form configuration
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm({
+    resolver: yupResolver(editPharmacySchema),
+    defaultValues: { pharmacy_name: '', city: '', registrationNumber: '', maxStaff: 10, status: 'inactive' },
+  });
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setList([{ ...form, users: Number(form.users) || 1, status: 'Active' }, ...list]);
-    toast.success(`${form.name} onboarded successfully!`);
-    setModal(false);
-    setForm(BLANK);
-    setLoading(false);
+  // Fetch pharmacies from API
+  const fetchPharmacies = async () => {
+    try {
+      const response = await api.get('/super-admin-pharmacies/all-pharmacies', {
+        params: {
+          searchTerm: query,
+        },
+      });
+      setList(response.data.data || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch pharmacies');
+    }
   };
 
-  const handleEdit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchPharmacies();
+    setPage(1);
+  }, [query]);
+
+  // Handle client-side pagination
+  const paginated = list.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const handleCreate = async (data) => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const updated = list.map((p) => p.name === selected?.name ? {
-      ...p,
-      name: form.name,
-      admin: form.admin,
-      email: form.email,
-      city: form.city,
-      status: form.status,
-      users: Number(form.users) || p.users,
-    } : p);
-    setList(updated);
-    toast.success(`${form.name} workspace updated!`);
-    setEditModal(false);
-    setSelected(null);
-    setForm(BLANK);
-    setLoading(false);
+    try {
+      await api.post('/auth/register-pharmacy', data);
+      toast.success(`${data.pharmacyName} onboarded successfully!`);
+      setModal(false);
+      fetchPharmacies();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to onboard pharmacy');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = async (data) => {
+    setLoading(true);
+    try {
+      await api.put(`/super-admin-pharmacies/edit-pharmacy/${selected._id}`, data);
+      toast.success(`${data.pharmacy_name} workspace updated!`);
+      setEditModal(false);
+      setSelected(null);
+      fetchPharmacies();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update pharmacy');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const updated = list.filter((p) => p.name !== selected?.name);
-    setList(updated);
-    toast.success(`${selected?.name} deleted`);
-    setDelModal(false);
-    setSelected(null);
-    setLoading(false);
+    try {
+      await api.delete(`/super-admin-pharmacies/delete-pharmacy/${selected._id}`);
+      toast.success(`${selected?.pharmacy_name} decommissioned successfully`);
+      setDelModal(false);
+      setSelected(null);
+      fetchPharmacies();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to decommission pharmacy');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openView = (p) => { setSelected(p); setViewModal(true); };
+  const openOnboard = () => {
+    resetOnboard({
+      pharmacyName: '',
+      name: '',
+      email: '',
+      city: '',
+      registrationNumber: '',
+    });
+    setModal(true);
+  };
+
+  const openView = (p) => {
+    setSelected(p);
+    setViewModal(true);
+  };
+
   const openEdit = (p) => {
     setSelected(p);
-    setForm({
-      name: p.name,
-      admin: p.admin,
-      email: p.email || `${p.admin.toLowerCase().replace(/ /g, '')}@${p.name.toLowerCase().replace(/ /g, '')}.com`,
+    resetEdit({
+      pharmacy_name: p.pharmacy_name,
       city: p.city,
-      status: p.status,
-      users: String(p.users),
+      registrationNumber: p.registrationNumber || '',
+      maxStaff: p.maxStaff || 10,
+      status: p.status || 'inactive',
     });
     setEditModal(true);
   };
-  const openDel = (p) => { setSelected(p); setDelModal(true); };
+
+  const openDel = (p) => {
+    setSelected(p);
+    setDelModal(true);
+  };
 
   return (
     <>
@@ -112,7 +156,7 @@ export default function PharmaciesPage() {
         title="Pharmacies"
         subtitle={`${list.length} pharmacies across the platform`}
         actions={
-          <Button size="sm" icon={<Plus size={15} />} onClick={() => { setForm(BLANK); setModal(true); }}>
+          <Button size="sm" icon={<Plus size={15} />} onClick={openOnboard}>
             Onboard pharmacy
           </Button>
         }
@@ -121,58 +165,85 @@ export default function PharmaciesPage() {
       <Card>
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 border-b border-outline-variant/60">
-          <SearchBar value={query} onChange={(v) => { setQuery(v); setPage(1); }} placeholder="Search pharmacies…" className="w-full sm:flex-1 sm:max-w-xs" />
+          <SearchBar
+            value={query}
+            onChange={(v) => {
+              setQuery(v);
+            }}
+            placeholder="Search pharmacies…"
+            className="w-full sm:flex-1 sm:max-w-xs"
+          />
           <div className="flex items-center gap-2 text-xs text-on-surface-variant sm:ml-auto flex-wrap">
-            <span className="h-2 w-2 rounded-full bg-primary" />Active: {list.filter(p => p.status === 'Active').length}
-            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Suspended: {list.filter(p => p.status === 'Suspended').length}
+            <span className="h-2 w-2 rounded-full bg-primary" />Active:{' '}
+            {list.filter((p) => p.status === 'active').length}
+            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Suspended:{' '}
+            {list.filter((p) => p.status === 'inactive').length}
           </div>
         </div>
 
         <Table>
           <thead>
             <tr>
-              <Th>Pharmacy</Th><Th>Admin</Th><Th>City</Th>
-              <Th align="right">Users</Th>
-              <Th>Status</Th><Th>Actions</Th>
+              <Th>Pharmacy</Th>
+              <Th>Admin</Th>
+              <Th>City</Th>
+              <Th align="right">Max Staff</Th>
+              <Th>Status</Th>
+              <Th>Actions</Th>
             </tr>
           </thead>
           <tbody>
             {paginated.length === 0 ? (
               <TableEmpty cols={6} message="No pharmacies found" icon={<Building2 size={32} />} />
-            ) : paginated.map((p, i) => (
-              <motion.tr key={p.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
-                <Td>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-xs font-bold">
-                      {p.name[0]}
+            ) : (
+              paginated.map((p, i) => (
+                <motion.tr
+                  key={p._id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <Td>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-xs font-bold">
+                        {p.pharmacy_name[0]}
+                      </div>
+                      <span className="font-semibold text-on-surface text-sm">{p.pharmacy_name}</span>
                     </div>
-                    <span className="font-semibold text-on-surface text-sm">{p.name}</span>
-                  </div>
-                </Td>
-                <Td className="text-sm">{p.admin}</Td>
-                <Td className="text-sm">{p.city}</Td>
-                <Td align="right" className="text-sm font-medium">{p.users}</Td>
-                <Td><Badge status={p.status} dot /></Td>
-                <Td>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => openView(p)} className="btn-ghost p-1.5 rounded-lg" title="View">
-                      <Eye size={15} />
-                    </button>
-                    <button onClick={() => openEdit(p)} className="btn-ghost p-1.5 rounded-lg" title="Edit">
-                      <Pencil size={15} />
-                    </button>
-                    <button onClick={() => openDel(p)} className="btn-ghost p-1.5 rounded-lg text-error/70 hover:text-error hover:bg-error/[0.08]" title="Delete">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </Td>
-              </motion.tr>
-            ))}
+                  </Td>
+                  <Td className="text-sm">{p.owner?.name || 'N/A'}</Td>
+                  <Td className="text-sm">{p.city}</Td>
+                  <Td align="right" className="text-sm font-medium">
+                    {p.maxStaff}
+                  </Td>
+                  <Td>
+                    <Badge status={p.status === 'active' ? 'Active' : 'Suspended'} dot />
+                  </Td>
+                  <Td>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openView(p)} className="btn-ghost p-1.5 rounded-lg" title="View">
+                        <Eye size={15} />
+                      </button>
+                      <button onClick={() => openEdit(p)} className="btn-ghost p-1.5 rounded-lg" title="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => openDel(p)}
+                        className="btn-ghost p-1.5 rounded-lg text-error/70 hover:text-error hover:bg-error/[0.08]"
+                        title="Delete"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </Td>
+                </motion.tr>
+              ))
+            )}
           </tbody>
         </Table>
 
         <div className="px-5 py-4 border-t border-outline-variant/60">
-          <Pagination page={page} total={filtered.length} perPage={PER_PAGE} onChange={setPage} />
+          <Pagination page={page} total={list.length} perPage={PER_PAGE} onChange={setPage} />
         </div>
       </Card>
 
@@ -184,18 +255,49 @@ export default function PharmaciesPage() {
         subtitle="Create the pharmacy and assign an admin account."
         footer={
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button>
-            <Button form="pharmacy-form" type="submit" loading={loading}>Create pharmacy</Button>
+            <Button variant="secondary" onClick={() => setModal(false)}>
+              Cancel
+            </Button>
+            <Button form="pharmacy-form" type="submit" loading={loading}>
+              Create pharmacy
+            </Button>
           </div>
         }
       >
-        <form id="pharmacy-form" onSubmit={handleCreate} className="p-6 space-y-4">
-          <Input label="Pharmacy name" value={form.name} onChange={(e) => field('name', e.target.value)} required placeholder="e.g. MedPoint Pharmacy" />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Admin name" value={form.admin} onChange={(e) => field('admin', e.target.value)} required placeholder="Full name" />
-            <Input label="Admin email" type="email" value={form.email} onChange={(e) => field('email', e.target.value)} required placeholder="admin@pharmacy.pk" />
+        <form id="pharmacy-form" onSubmit={handleSubmitOnboard(handleCreate)} className="p-6 space-y-4">
+          <Input
+            label="Pharmacy name"
+            {...registerOnboard('pharmacyName')}
+            placeholder="e.g. MedPoint Pharmacy"
+            error={onboardErrors.pharmacyName?.message}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Admin name"
+              {...registerOnboard('name')}
+              placeholder="Full name"
+              error={onboardErrors.name?.message}
+            />
+            <Input
+              label="Admin email"
+              type="email"
+              {...registerOnboard('email')}
+              placeholder="admin@pharmacy.pk"
+              error={onboardErrors.email?.message}
+            />
           </div>
-          <Input label="City" value={form.city} onChange={(e) => field('city', e.target.value)} required placeholder="City" />
+          <Input
+            label="City"
+            {...registerOnboard('city')}
+            placeholder="City"
+            error={onboardErrors.city?.message}
+          />
+          <Input
+            label="Registration number"
+            {...registerOnboard('registrationNumber')}
+            placeholder="e.g. REG-12345"
+            error={onboardErrors.registrationNumber?.message}
+          />
           <div className="rounded-xl bg-warning/[0.08] border border-warning/30 p-3 text-xs text-warning">
             A temporary password will be auto-generated and emailed to the admin.
           </div>
@@ -207,23 +309,51 @@ export default function PharmaciesPage() {
         open={editModal}
         onClose={() => setEditModal(false)}
         title="Edit Pharmacy"
-        subtitle={`Editing workspace for ${selected?.name}`}
+        subtitle={`Editing workspace for ${selected?.pharmacy_name}`}
         footer={
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setEditModal(false)}>Cancel</Button>
-            <Button form="pharmacy-edit-form" type="submit" loading={loading}>Save changes</Button>
+            <Button variant="secondary" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+            <Button form="pharmacy-edit-form" type="submit" loading={loading}>
+              Save changes
+            </Button>
           </div>
         }
       >
-        <form id="pharmacy-edit-form" onSubmit={handleEdit} className="p-6 space-y-4">
-          <Input label="Pharmacy name" value={form.name} onChange={(e) => field('name', e.target.value)} required />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Admin name" value={form.admin} onChange={(e) => field('admin', e.target.value)} required />
-            <Input label="Admin email" type="email" value={form.email} onChange={(e) => field('email', e.target.value)} required />
-          </div>
-          <Input label="City" value={form.city} onChange={(e) => field('city', e.target.value)} required />
-          <Input label="Users Count" type="number" value={form.users} onChange={(e) => field('users', e.target.value)} min="1" required />
-          <Select label="Status" value={form.status} onChange={(e) => field('status', e.target.value)} options={['Active', 'Suspended']} />
+        <form id="pharmacy-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+          <Input
+            label="Pharmacy name"
+            {...registerEdit('pharmacy_name')}
+            error={editErrors.pharmacy_name?.message}
+          />
+          <Input
+            label="City"
+            {...registerEdit('city')}
+            error={editErrors.city?.message}
+          />
+          <Input
+            label="Registration number"
+            {...registerEdit('registrationNumber')}
+            error={editErrors.registrationNumber?.message}
+          />
+          <Input
+            label="Max staff count"
+            type="number"
+            {...registerEdit('maxStaff')}
+            min="2"
+            max="20"
+            error={editErrors.maxStaff?.message}
+          />
+          <Select
+            label="Status"
+            {...registerEdit('status')}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Suspended' },
+            ]}
+            error={editErrors.status?.message}
+          />
         </form>
       </Modal>
 
@@ -232,32 +362,46 @@ export default function PharmaciesPage() {
         open={viewModal}
         onClose={() => setViewModal(false)}
         title="Pharmacy Profile"
-        subtitle={selected?.name}
+        subtitle={selected?.pharmacy_name}
         size="sm"
       >
         {selected && (
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.12] text-primary text-xl font-bold">
-                {selected?.name?.[0]}
+                {selected?.pharmacy_name?.[0]}
               </div>
               <div>
-                <div className="text-lg font-semibold text-on-surface">{selected?.name}</div>
+                <div className="text-lg font-semibold text-on-surface">{selected?.pharmacy_name}</div>
                 <div className="text-sm text-on-surface-variant">{selected?.city}</div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Admin Person</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.admin}</div>
+                <div className="text-on-surface-variant text-xs">Admin Name</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.owner?.name || 'N/A'}</div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Active Users</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.users}</div>
+                <div className="text-on-surface-variant text-xs">Admin Email</div>
+                <div className="font-medium text-on-surface mt-0.5 truncate" title={selected?.owner?.email}>
+                  {selected?.owner?.email || 'N/A'}
+                </div>
               </div>
-              <div className="rounded-xl bg-surface-container p-3 col-span-2">
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Max Staff Capacity</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.maxStaff}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Registration Number</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.registrationNumber || 'N/A'}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3 col-span-1 sm:col-span-2">
                 <div className="text-on-surface-variant text-xs">Platform Status</div>
-                <div className="mt-1"><Badge status={selected?.status} dot>{selected?.status}</Badge></div>
+                <div className="mt-1">
+                  <Badge status={selected?.status === 'active' ? 'Active' : 'Suspended'} dot>
+                    {selected?.status === 'active' ? 'Active' : 'Suspended'}
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>
@@ -272,14 +416,19 @@ export default function PharmaciesPage() {
         size="sm"
         footer={
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setDelModal(false)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} loading={loading}>Decommission</Button>
+            <Button variant="secondary" onClick={() => setDelModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} loading={loading}>
+              Decommission
+            </Button>
           </div>
         }
       >
         <div className="p-6">
           <p className="text-sm text-on-surface-variant">
-            Are you sure you want to delete <strong className="text-on-surface">{selected?.name}</strong>? This action terminates all user accounts and deletes all branch data.
+            Are you sure you want to delete <strong className="text-on-surface">{selected?.pharmacy_name}</strong>?
+            This action terminates all user accounts and deletes all branch data.
           </p>
         </div>
       </Modal>

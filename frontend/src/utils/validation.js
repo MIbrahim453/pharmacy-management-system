@@ -55,6 +55,40 @@ export const changePasswordSchema = yup.object().shape({
     .required("Please confirm your new password"),
 });
 
+// Schema for Onboarding a new Pharmacy
+export const onboardPharmacySchema = yup.object().shape({
+  pharmacyName: yup.string().required("Pharmacy name is required"),
+  name: yup
+    .string()
+    .min(3, "Admin name must be at least 3 characters")
+    .max(30, "Admin name cannot exceed 30 characters")
+    .required("Admin name is required"),
+  email: yup
+    .string()
+    .email("Please enter a valid email address")
+    .required("Admin email is required"),
+  city: yup.string().required("City is required"),
+  registrationNumber: yup.string().required("Registration number is required"),
+});
+
+// Schema for Editing a Pharmacy
+export const editPharmacySchema = yup.object().shape({
+  pharmacy_name: yup.string().required("Pharmacy name is required"),
+  city: yup.string().required("City is required"),
+  registrationNumber: yup.string().required("Registration number is required"),
+  maxStaff: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .typeError("Max staff must be a number")
+    .min(2, "Max staff must be at least 2")
+    .max(20, "Max staff cannot exceed 20")
+    .required("Max staff count is required"),
+  status: yup
+    .string()
+    .oneOf(["active", "inactive"], "Status must be active or inactive")
+    .required("Status is required"),
+});
+
 /**
  * Custom React Hook Form resolver for Yup schemas.
  * Eliminates the need for installing external resolver libraries.
