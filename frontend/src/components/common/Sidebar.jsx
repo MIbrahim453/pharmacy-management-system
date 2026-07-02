@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -6,6 +7,7 @@ import {
   Stethoscope, UserCircle, X, Menu,
 } from 'lucide-react';
 import { initials } from '../../utils/helpers';
+import api from '../../services/axios';
 
 const NAV = {
   super: [
@@ -65,11 +67,40 @@ const NAV = {
 
 export default function Sidebar({ open, onClose, onToggleExpand, role = 'admin', userName = 'User', userEmail = 'user@pharmacy.pk', onLogout }) {
   const navigate = useNavigate();
+  const [totalPharmacies, setTotalPharmacies] = useState(null);
+
+  useEffect(() => {
+    if (role === 'super') {
+      api.get('/super-admin-pharmacies/dashboard-stats')
+        .then((res) => {
+          setTotalPharmacies(res.data.data.totalPharmacies);
+        })
+        .catch(() => {});
+    }
+  }, [role]);
 
   const signOut = () => {
     onLogout?.();
     navigate('/login');
   };
+
+  const navItems = NAV[role]?.map((group) => {
+    if (group.section === 'Platform') {
+      return {
+        ...group,
+        items: group.items.map((item) => {
+          if (item.label === 'Pharmacies') {
+            return {
+              ...item,
+              badge: totalPharmacies !== null ? String(totalPharmacies) : '…',
+            };
+          }
+          return item;
+        }),
+      };
+    }
+    return group;
+  }) || [];
 
   const content = (isCollapsed = false) => (
     <>
@@ -103,11 +134,12 @@ export default function Sidebar({ open, onClose, onToggleExpand, role = 'admin',
         )}
       </div>
 
+      {/* Line */}
       <div className="h-px bg-surface-container-high mx-4" />
 
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
-        {NAV[role]?.map(({ section, items }) => (
+        {navItems.map(({ section, items }) => (
           <div key={section}>
             {!isCollapsed && (
               <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/70">
