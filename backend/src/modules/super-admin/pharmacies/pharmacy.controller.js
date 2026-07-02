@@ -1,7 +1,10 @@
 import {
+  changeStatus,
   deletePharmacy,
   editPharmacy,
+  getDashboardStats,
   getPharmacies,
+  getSignUpTrend,
   viewPharmacy,
 } from "./pharmacy.service.js";
 import { sendSuccess } from "../../../utils/response.js";
@@ -43,4 +46,39 @@ const pharmacyView = async (req, res, next) => {
   }
 };
 
-export { pharmacyEdit, pharmacyDelete, getAllPharmacies, pharmacyView };
+const dashboardStats = async (req, res, next) => {
+  try {
+    const result = await getDashboardStats();
+    return sendSuccess(res, result, "Dashboard Stats Fetched Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const signUpTrends = async (req, res, next) => {
+  try {
+    const result = await getSignUpTrend(req.params.period);
+    return sendSuccess(res, result, "Sign Up Trends Fetched Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const pharmacyStatus = async (req, res, next) => {
+  try {
+    const result = await changeStatus(req.params.id, req.body.status);
+    return sendSuccess(res, result, "Pharmacy Status Changed Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  pharmacyEdit,
+  pharmacyDelete,
+  getAllPharmacies,
+  pharmacyView,
+  dashboardStats,
+  signUpTrends,
+  pharmacyStatus,
+};

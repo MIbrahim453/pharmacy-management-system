@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Building2, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Building2, Eye, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../../components/common/PageHeader';
 import SearchBar from '../../../components/common/SearchBar';
@@ -117,6 +117,21 @@ export default function PharmaciesPage() {
     }
   };
 
+  const handleStatusChange = async (pharmacy) => {
+    const newStatus = pharmacy.status === 'active' ? 'inactive' : 'active';
+    try {
+      await api.put(`/super-admin-pharmacies/change-status/${pharmacy._id}`, {
+        status: newStatus,
+      });
+      toast.success(
+        `${pharmacy.pharmacy_name} is now ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
+      );
+      fetchPharmacies();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to change status');
+    }
+  };
+
   const openOnboard = () => {
     resetOnboard({
       pharmacyName: '',
@@ -176,7 +191,7 @@ export default function PharmaciesPage() {
           <div className="flex items-center gap-2 text-xs text-on-surface-variant sm:ml-auto flex-wrap">
             <span className="h-2 w-2 rounded-full bg-primary" />Active:{' '}
             {list.filter((p) => p.status === 'active').length}
-            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Suspended:{' '}
+            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Inactive:{' '}
             {list.filter((p) => p.status === 'inactive').length}
           </div>
         </div>
@@ -226,6 +241,17 @@ export default function PharmaciesPage() {
                       </button>
                       <button onClick={() => openEdit(p)} className="btn-ghost p-1.5 rounded-lg" title="Edit">
                         <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(p)}
+                        className={`btn-ghost p-1.5 rounded-lg transition-colors ${
+                          p.status === 'active'
+                            ? 'text-primary/70 hover:text-primary hover:bg-primary/[0.08]'
+                            : 'text-on-surface-variant/70 hover:text-on-surface-variant hover:bg-surface-container'
+                        }`}
+                        title={p.status === 'active' ? 'Deactivate' : 'Activate'}
+                      >
+                        {p.status === 'active' ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                       </button>
                       <button
                         onClick={() => openDel(p)}
