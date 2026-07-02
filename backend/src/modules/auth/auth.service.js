@@ -17,6 +17,7 @@ import {
   staffEmailTemplate,
   resetPasswordEmailTemplate,
 } from "../../utils/emailTemplate.js";
+import loginHistory from "../../database/models/loginHistory.model.js";
 
 const loginUrl = `${config.frontendUrl}/login`;
 const resetPasswordExpiryMinutes = 15;
@@ -175,13 +176,26 @@ const generateToken = (user) => {
   return { accessToken, refreshToken };
 };
 
-const login = async (user) => {
+const login = async (user, req) => {
   const token = generateToken(user);
+
+  await loginHistory.create({
+    user: user._id,
+    ipAddress: req.ip,
+    userAgent: req.headers["user-agent"],
+  });
+
+  await User.findByIdAndUpdate(user.id, {
+    lastLogin: new Date(),
+  });
+
   const userWithRole = await User.findById(user.id)
     .select("-password")
     .populate("role", "name")
     .populate("pharmacyId", "pharmacy_name");
+
   logger.info("User Logged In Successfully");
+
   return { userWithRole, token };
 };
 
