@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Plus, Truck, Eye, Pencil, Trash2, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,21 +13,19 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
-
-// TODO: Replace with API call — GET /api/admin/suppliers
-const INITIAL_SUPPLIERS = [
-  { name: 'GSK Pakistan', contact: 'Tariq Mahmood', phone: '+92 21 111 475 475', lastOrder: '15 Dec 2025', payable: '125000', status: 'Active' },
-  { name: 'Abbott Pakistan', contact: 'Amna Siddiqui', phone: '+92 42 111 222 333', lastOrder: '10 Dec 2025', payable: '87500', status: 'Active' },
-  { name: 'Merck Pakistan', contact: 'Rizwan Khan', phone: '+92 51 111 444 555', lastOrder: '5 Dec 2025', payable: '60000', status: 'Pending' },
-  { name: 'Sanofi Pakistan', contact: 'Nadia Ahmed', phone: '+92 21 111 726 634', lastOrder: '1 Dec 2025', payable: '210000', status: 'Active' },
-];
+import { yupResolver, supplierCreateSchema, supplierEditSchema } from '../../../utils/validation';
+import {
+  getAllSuppliers,
+  createSupplier,
+  editSupplier,
+  deleteSupplier,
+} from '../../../services/supplierService';
 
 const PER_PAGE = 8;
-const BLANK = { name: '', contact: '', phone: '', lastOrder: '', payable: '0', status: 'Active' };
 const ORDER_BLANK = { medicineName: '', quantityPerPack: '', note: '', paymentMethod: 'Bank Transfer' };
 
 export default function Suppliers() {
-  const [list, setList] = useState(INITIAL_SUPPLIERS);
+  const [list, setList] = useState([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(false);
@@ -35,96 +34,239 @@ export default function Suppliers() {
   const [delModal, setDelModal] = useState(false);
   const [orderModal, setOrderModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(BLANK);
   const [orderForm, setOrderForm] = useState(ORDER_BLANK);
   const [selected, setSelected] = useState(null);
 
-  const filtered = list.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()) || s.contact.toLowerCase().includes(query.toLowerCase()));
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const field = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const orderField = (k, v) => setOrderForm((f) => ({ ...f, [k]: v }));
+  // Add Form Configuration
+  const {
+    register: registerAdd,
+    handleSubmit: handleSubmitAdd,
+    reset: resetAdd,
+    formState: { errors: addErrors },
+  } = useForm({
+    resolver: yupResolver(supplierCreateSchema),
+    defaultValues: {
+      name: '',
+      contact: '',
+      phone: '',
+      status: 'active',
+    },
+  });
 
-  const handleAdd = async (e) => {
-    e.preventDefault(); setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    // TODO: POST /api/admin/suppliers
-    setList([{ ...form }, ...list]);
-    toast.success(`${form.name} added as supplier`);
-    setModal(false); setForm(BLANK); setLoading(false);
+  // Edit Form Configuration
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm({
+    resolver: yupResolver(supplierEditSchema),
+    defaultValues: {
+      name: '',
+      brand: '',
+      category: 'Antibiotics',
+      expiryDate: '',
+      stockQty: '',
+      reorderLevel: '',
+      tabPrice: '',
+      stripPrice: '',
+      packPrice: '',
+      status: 'inStock',
+    },
+  });
+
+  const fetchSuppliers = async () => {
+    try {
+      const data = await getAllSuppliers(query);
+      setList(data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch suppliers');
+    }
   };
 
-  const handleEdit = async (e) => {
-    e.preventDefault(); setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    // TODO: PUT /api/admin/suppliers/:id
-    setList(list.map((s) => s.name === selected?.name ? { ...s, ...form } : s));
-    toast.success(`${form.name} updated`);
-    setEditModal(false); setSelected(null); setForm(BLANK); setLoading(false);
+  useEffect(() => {
+    fetchSuppliers();
+    setPage(1);
+  }, [query]);
+
+  const filtered = list;
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const orderField = (k, v) => setOrderForm((f) => ({ ...f, [k]: v }));
+
+  const openAdd = () => {
+    resetAdd({
+      name: '',
+      contact: '',
+      phone: '',
+      status: 'active',
+    });
+    setModal(true);
+  };
+
+  const handleAdd = async (data) => {
+    setLoading(true);
+    try {
+      const newSupplier = await createSupplier(data);
+      setList((prev) => [newSupplier, ...prev]);
+      toast.success(`${newSupplier.name} added as supplier`);
+      setModal(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add supplier');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEdit = (s) => {
+    setSelected(s);
+    resetEdit({
+      name: s.name,
+      contact: s.contact,
+      phone: s.phone,
+      status: s.status === 'Active' ? 'active' : 'inactive',
+    });
+    setEditModal(true);
+  };
+
+  const handleEdit = async (data) => {
+    setLoading(true);
+    try {
+      const updated = await editSupplier(selected.id, data);
+      setList((prev) => prev.map((s) => (s.id === selected.id ? updated : s)));
+      toast.success(`${updated.name} updated successfully`);
+      setEditModal(false);
+      setSelected(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update supplier');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDel = (s) => {
+    setSelected(s);
+    setDelModal(true);
   };
 
   const handleDelete = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    // TODO: DELETE /api/admin/suppliers/:id
-    setList(list.filter((s) => s.name !== selected?.name));
-    toast.success(`${selected?.name} deleted`);
-    setDelModal(false); setSelected(null); setLoading(false);
+    try {
+      await deleteSupplier(selected.id);
+      setList((prev) => prev.filter((s) => s.id !== selected.id));
+      toast.success(`${selected?.name} deleted successfully`);
+      setDelModal(false);
+      setSelected(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete supplier');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOrder = async (e) => {
-    e.preventDefault(); setLoading(true);
+    e.preventDefault();
+    setLoading(true);
     await new Promise((r) => setTimeout(r, 700));
-    // TODO: POST /api/admin/orders
     toast.success(`Order placed with ${selected?.name} for ${orderForm.medicineName}`);
-    setOrderModal(false); setSelected(null); setOrderForm(ORDER_BLANK); setLoading(false);
+    setOrderModal(false);
+    setSelected(null);
+    setOrderForm(ORDER_BLANK);
+    setLoading(false);
   };
 
-  const openView = (s) => { setSelected(s); setViewModal(true); };
-  const openEdit = (s) => { setSelected(s); setForm({ name: s.name, contact: s.contact, phone: s.phone, lastOrder: s.lastOrder, payable: String(s.payable).replace(/,/g, ''), status: s.status }); setEditModal(true); };
-  const openDel = (s) => { setSelected(s); setDelModal(true); };
-  const openOrder = (s) => { setSelected(s); setOrderForm({ ...ORDER_BLANK, supplierName: s.name }); setOrderModal(true); };
+  const openView = (s) => {
+    setSelected(s);
+    setViewModal(true);
+  };
+
+  const openOrder = (s) => {
+    setSelected(s);
+    setOrderForm({ ...ORDER_BLANK, supplierName: s.name });
+    setOrderModal(true);
+  };
 
   return (
     <>
-      <PageHeader title="Suppliers" subtitle={`${list.length} active supplier relationships`}
-        actions={<Button size="sm" icon={<Plus size={15} />} onClick={() => { setForm(BLANK); setModal(true); }}>Add supplier</Button>} />
+      <PageHeader
+        title="Suppliers"
+        subtitle={`${list.length} active supplier relationships`}
+        actions={
+          <Button size="sm" icon={<Plus size={15} />} onClick={openAdd}>
+            Add supplier
+          </Button>
+        }
+      />
 
       <Card>
         <div className="px-5 py-4 border-b border-outline-variant/60">
-          <SearchBar value={query} onChange={(v) => { setQuery(v); setPage(1); }} placeholder="Search suppliers…" className="w-full sm:max-w-xs" />
+          <SearchBar
+            value={query}
+            onChange={(v) => setQuery(v)}
+            placeholder="Search suppliers…"
+            className="w-full sm:max-w-xs"
+          />
         </div>
         <Table>
-          <thead><tr>
-            <Th>Supplier</Th><Th>Contact</Th><Th>Phone</Th>
-            <Th>Last order</Th><Th align="right">Payable</Th><Th>Status</Th><Th>Actions</Th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <Th>Supplier</Th>
+              <Th>Contact</Th>
+              <Th>Phone</Th>
+              <Th>Last order</Th>
+              <Th align="right">Payable</Th>
+              <Th>Status</Th>
+              <Th>Actions</Th>
+            </tr>
+          </thead>
           <tbody>
-            {paginated.length === 0
-              ? <TableEmpty cols={7} message="No suppliers found" icon={<Truck size={32} />} />
-              : paginated.map((s, i) => (
-                <motion.tr key={s.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+            {paginated.length === 0 ? (
+              <TableEmpty cols={7} message="No suppliers found" icon={<Truck size={32} />} />
+            ) : (
+              paginated.map((s, i) => (
+                <motion.tr
+                  key={s.id || s.name}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                >
                   <Td>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-secondary/[0.16] text-secondary text-[10px] font-bold">{s.name.slice(0, 2).toUpperCase()}</div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-secondary/[0.16] text-secondary text-[10px] font-bold">
+                        {s.name.slice(0, 2).toUpperCase()}
+                      </div>
                       <span className="text-sm font-semibold text-on-surface">{s.name}</span>
                     </div>
                   </Td>
                   <Td className="text-sm">{s.contact}</Td>
-                  <Td mono className="text-xs text-on-surface-variant">{s.phone}</Td>
+                  <Td mono className="text-xs text-on-surface-variant">
+                    {s.phone}
+                  </Td>
                   <Td className="text-xs text-on-surface-variant">{s.lastOrder}</Td>
-                  <Td align="right" className="text-sm font-semibold text-on-surface">Rs {Number(String(s.payable).replace(/,/g, '')).toLocaleString()}</Td>
-                  <Td><Badge status={s.status} dot /></Td>
+                  <Td align="right" className="text-sm font-semibold text-on-surface">
+                    Rs {s.payable.toLocaleString()}
+                  </Td>
+                  <Td>
+                    <Badge status={s.status} dot />
+                  </Td>
                   <Td>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => openView(s)} className="btn-ghost p-1.5 rounded-lg"><Eye size={15} /></button>
-                      <button onClick={() => openEdit(s)} className="btn-ghost p-1.5 rounded-lg"><Pencil size={15} /></button>
-                      <button onClick={() => openOrder(s)} className="btn-ghost p-1.5 rounded-lg text-primary/70 hover:text-primary hover:bg-primary/[0.08]"><ShoppingCart size={15} /></button>
-                      <button onClick={() => openDel(s)} className="btn-ghost p-1.5 rounded-lg text-error/70 hover:text-error hover:bg-error/[0.08]"><Trash2 size={15} /></button>
+                      <button onClick={() => openView(s)} className="btn-ghost p-1.5 rounded-lg">
+                        <Eye size={15} />
+                      </button>
+                      <button onClick={() => openEdit(s)} className="btn-ghost p-1.5 rounded-lg">
+                        <Pencil size={15} />
+                      </button>
+                      <button onClick={() => openOrder(s)} className="btn-ghost p-1.5 rounded-lg text-primary/70 hover:text-primary hover:bg-primary/[0.08]">
+                        <ShoppingCart size={15} />
+                      </button>
+                      <button onClick={() => openDel(s)} className="btn-ghost p-1.5 rounded-lg text-error/70 hover:text-error hover:bg-error/[0.08]">
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </Td>
                 </motion.tr>
               ))
-            }
+            )}
           </tbody>
         </Table>
         <div className="px-5 py-4 border-t border-outline-variant/60">
@@ -132,66 +274,187 @@ export default function Suppliers() {
         </div>
       </Card>
 
-      {/* Add */}
-      <Modal open={modal} onClose={() => setModal(false)} title="Add supplier"
-        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button><Button form="supplier-form" type="submit" loading={loading}>Add supplier</Button></div>}>
-        <form id="supplier-form" onSubmit={handleAdd} className="p-6 space-y-4">
-          <Input label="Supplier name" value={form.name} onChange={(e) => field('name', e.target.value)} required placeholder="e.g. GSK Pakistan" />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Contact person" value={form.contact} onChange={(e) => field('contact', e.target.value)} required />
-            <Input label="Phone" value={form.phone} onChange={(e) => field('phone', e.target.value)} />
+      {/* Add Modal */}
+      <Modal
+        open={modal}
+        onClose={() => setModal(false)}
+        title="Add supplier"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setModal(false)}>
+              Cancel
+            </Button>
+            <Button form="supplier-form" type="submit" loading={loading}>
+              Add supplier
+            </Button>
           </div>
-          <Input label="Last order date" value={form.lastOrder} onChange={(e) => field('lastOrder', e.target.value)} placeholder="DD Mon YYYY" />
+        }
+      >
+        <form id="supplier-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 space-y-4">
+          <Input
+            label="Supplier name"
+            {...registerAdd('name')}
+            required
+            placeholder="e.g. GSK Pakistan"
+            error={addErrors.name?.message}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Contact person" {...registerAdd('contact')} required error={addErrors.contact?.message} />
+            <Input label="Phone" {...registerAdd('phone')} required error={addErrors.phone?.message} />
+          </div>
         </form>
       </Modal>
 
-      {/* Edit */}
-      <Modal open={editModal} onClose={() => setEditModal(false)} title="Edit supplier" subtitle={`Editing ${selected?.name}`}
-        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setEditModal(false)}>Cancel</Button><Button form="supplier-edit-form" type="submit" loading={loading}>Save changes</Button></div>}>
-        <form id="supplier-edit-form" onSubmit={handleEdit} className="p-6 space-y-4">
-          <Input label="Supplier name" value={form.name} onChange={(e) => field('name', e.target.value)} required />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Contact person" value={form.contact} onChange={(e) => field('contact', e.target.value)} required />
-            <Input label="Phone" value={form.phone} onChange={(e) => field('phone', e.target.value)} />
+      {/* Edit Modal */}
+      <Modal
+        open={editModal}
+        onClose={() => setEditModal(false)}
+        title="Edit supplier"
+        subtitle={`Editing ${selected?.name}`}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setEditModal(false)}>
+              Cancel
+            </Button>
+            <Button form="supplier-edit-form" type="submit" loading={loading}>
+              Save changes
+            </Button>
           </div>
-          <Select label="Status" value={form.status} onChange={(e) => field('status', e.target.value)} options={['Active', 'Pending']} />
+        }
+      >
+        <form id="supplier-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+          <Input
+            label="Supplier name"
+            {...registerEdit('name')}
+            required
+            error={editErrors.name?.message}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Contact person" {...registerEdit('contact')} required error={editErrors.contact?.message} />
+            <Input label="Phone" {...registerEdit('phone')} required error={editErrors.phone?.message} />
+          </div>
+          <Select
+            label="Status"
+            {...registerEdit('status')}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Pending' },
+            ]}
+            error={editErrors.status?.message}
+          />
         </form>
       </Modal>
 
-      {/* View */}
+      {/* View Modal */}
       <Modal open={viewModal} onClose={() => setViewModal(false)} title="Supplier Profile" subtitle={selected?.name} size="sm">
         {selected && (
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-secondary/[0.16] text-secondary text-xl font-bold">{selected?.name?.slice(0, 2).toUpperCase()}</div>
-              <div><div className="text-lg font-semibold text-on-surface">{selected?.name}</div><div className="text-sm text-on-surface-variant">{selected?.contact}</div></div>
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-secondary/[0.16] text-secondary text-xl font-bold">
+                {selected?.name?.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div className="text-lg font-semibold text-on-surface">{selected?.name}</div>
+                <div className="text-sm text-on-surface-variant">{selected?.contact}</div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-surface-container p-3"><div className="text-on-surface-variant text-xs">Phone</div><div className="font-medium text-on-surface mt-0.5">{selected?.phone}</div></div>
-              <div className="rounded-xl bg-surface-container p-3"><div className="text-on-surface-variant text-xs">Last Order</div><div className="font-medium text-on-surface mt-0.5">{selected?.lastOrder}</div></div>
-              <div className="rounded-xl bg-surface-container p-3"><div className="text-on-surface-variant text-xs">Payable</div><div className="font-medium text-on-surface mt-0.5">Rs {Number(String(selected?.payable || '0').replace(/,/g, '')).toLocaleString()}</div></div>
-              <div className="rounded-xl bg-surface-container p-3"><div className="text-on-surface-variant text-xs">Status</div><div className="mt-1"><Badge status={selected?.status} dot>{selected?.status}</Badge></div></div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Phone</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.phone}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Last Order</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.lastOrder}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Payable</div>
+                <div className="font-medium text-on-surface mt-0.5">Rs {selected?.payable.toLocaleString()}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Status</div>
+                <div className="mt-1">
+                  <Badge status={selected?.status} dot>
+                    {selected?.status}
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Order */}
-      <Modal open={orderModal} onClose={() => setOrderModal(false)} title="Place Order" subtitle={`Ordering from ${selected?.name}`}
-        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setOrderModal(false)}>Cancel</Button><Button form="order-form" type="submit" loading={loading}>Place order</Button></div>}>
+      {/* Order Modal */}
+      <Modal
+        open={orderModal}
+        onClose={() => setOrderModal(false)}
+        title="Place Order"
+        subtitle={`Ordering from ${selected?.name}`}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setOrderModal(false)}>
+              Cancel
+            </Button>
+            <Button form="order-form" type="submit" loading={loading}>
+              Place order
+            </Button>
+          </div>
+        }
+      >
         <form id="order-form" onSubmit={handleOrder} className="p-6 space-y-4">
           <Input label="Supplier name" value={selected?.name || ''} disabled />
-          <Input label="Medicine name" value={orderForm.medicineName} onChange={(e) => orderField('medicineName', e.target.value)} required placeholder="e.g. Augmentin 625mg" />
-          <Input label="Quantity per pack" type="number" value={orderForm.quantityPerPack} onChange={(e) => orderField('quantityPerPack', e.target.value)} required min="1" />
-          <Input label="Note" value={orderForm.note} onChange={(e) => orderField('note', e.target.value)} placeholder="Any special instructions…" />
-          <Select label="Payment method" value={orderForm.paymentMethod} onChange={(e) => orderField('paymentMethod', e.target.value)} options={['Bank Transfer', 'Cheque', 'Cash', 'Credit']} />
+          <Input
+            label="Medicine name"
+            value={orderForm.medicineName}
+            onChange={(e) => orderField('medicineName', e.target.value)}
+            required
+            placeholder="e.g. Augmentin 625mg"
+          />
+          <Input
+            label="Quantity per pack"
+            type="number"
+            value={orderForm.quantityPerPack}
+            onChange={(e) => orderField('quantityPerPack', e.target.value)}
+            required
+            min="1"
+          />
+          <Input
+            label="Note"
+            value={orderForm.note}
+            onChange={(e) => orderField('note', e.target.value)}
+            placeholder="Any special instructions…"
+          />
+          <Select
+            label="Payment method"
+            value={orderForm.paymentMethod}
+            onChange={(e) => orderField('paymentMethod', e.target.value)}
+            options={['Bank Transfer', 'Cheque', 'Cash', 'Credit']}
+          />
         </form>
       </Modal>
 
-      {/* Delete */}
-      <Modal open={delModal} onClose={() => setDelModal(false)} title="Delete Supplier" size="sm"
-        footer={<div className="flex justify-end gap-3"><Button variant="secondary" onClick={() => setDelModal(false)}>Cancel</Button><Button variant="danger" onClick={handleDelete} loading={loading}>Delete</Button></div>}>
-        <div className="p-6"><p className="text-sm text-on-surface-variant">Are you sure you want to delete <strong className="text-on-surface">{selected?.name}</strong>? This action cannot be undone.</p></div>
+      {/* Delete Confirmation */}
+      <Modal
+        open={delModal}
+        onClose={() => setDelModal(false)}
+        title="Delete Supplier"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setDelModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} loading={loading}>
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <div className="p-6">
+          <p className="text-sm text-on-surface-variant">
+            Are you sure you want to delete <strong className="text-on-surface">{selected?.name}</strong>? This action cannot be undone.
+          </p>
+        </div>
       </Modal>
     </>
   );

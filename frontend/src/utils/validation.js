@@ -175,4 +175,30 @@ export const medicineEditSchema = medicineCreateSchema.shape({
   name: yup.string().min(2).max(100).optional(),
 });
 
+export const supplierCreateSchema = yup.object().shape({
+  name: yup
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .required("Name is required"),
+  contact: yup
+    .string()
+    .min(2, "Contact person must be at least 2 characters")
+    .max(100, "Contact person cannot exceed 100 characters")
+    .required("Contact person is required"),
+  phone: yup
+    .string()
+    .min(6, "Phone must be at least 6 characters")
+    .max(20, "Phone cannot exceed 20 characters")
+    .required("Phone number is required"),
+  status: yup
+    .string()
+    .oneOf(["active", "inactive"], "Status must be Active or Pending")
+    .required("Status is required"),
+});
+
+export const supplierEditSchema = supplierCreateSchema.shape({
+  name: yup.string().min(2).max(100).optional(),
+});
+
 export default yupResolver;
