@@ -9,6 +9,7 @@ import {
   changePasswordUser,
   getUser,
   updateProfileUser,
+  logoutUser,
 } from "./auth.controller.js";
 import authorizeRole from "../../middlewares/rbac.js";
 import validate from "../../middlewares/validation.js";
@@ -58,6 +59,12 @@ router.post(
 
 router.post("/change-password", authenticate, changePasswordUser);
 router.get("/me", authenticate, getUser);
-router.put("/profile", authenticate, validate(profileValidation), updateProfileUser);
+router.put(
+  "/profile",
+  authenticate,
+  validate(profileValidation),
+  updateProfileUser,
+);
+router.post("/logout", authenticate, logoutUser);
 
 export default router;

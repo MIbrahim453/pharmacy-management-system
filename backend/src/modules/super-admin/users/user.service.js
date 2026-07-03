@@ -1,6 +1,7 @@
 import User from "../../../database/models/user.model.js";
 import Role from "../../../database/models/role.model.js";
 import { NotFoundError } from "../../../utils/errors.js";
+import logger from "../../../utils/logger.js";
 
 const getUsers = async (query) => {
   const {
@@ -63,6 +64,8 @@ const getUsers = async (query) => {
     status: u.status,
   }));
 
+  logger.info("Retrieved users list");
+
   return {
     users: mapped,
     total,
@@ -87,6 +90,7 @@ const viewUser = async (id) => {
     throw new NotFoundError("User Not Found");
   }
 
+  logger.info("User Fetched Successfully");
   return user;
 };
 

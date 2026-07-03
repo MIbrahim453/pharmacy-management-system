@@ -94,6 +94,7 @@ const getAnalytics = async () => {
   const suspendedPharmacies = await Pharmacy.countDocuments({
     status: "suspended",
   });
+  logger.info("Analytics Fetched Successfully");
 
   return {
     activePharmacies,

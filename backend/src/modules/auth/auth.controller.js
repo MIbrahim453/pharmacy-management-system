@@ -10,6 +10,7 @@ import {
   updateProfile,
 } from "./auth.service.js";
 import { sendCreated, sendSuccess } from "../../utils/response.js";
+import logger from "../../utils/logger.js";
 
 const signUpAdmin = async (req, res, next) => {
   try {
@@ -56,7 +57,7 @@ const forgotPasswordUser = async (req, res, next) => {
   }
 };
 
-const resetPasswordUser = async (req, res, next ) => {
+const resetPasswordUser = async (req, res, next) => {
   try {
     const result = await resetPassword(req.params.token, req.body.password);
     return sendSuccess(res, result, "Password reset successfully");
@@ -67,30 +68,43 @@ const resetPasswordUser = async (req, res, next ) => {
 
 const changePasswordUser = async (req, res, next) => {
   try {
-    const result = await changePassword(req.user.id, req.body.oldPassword, req.body.newPassword)
+    const result = await changePassword(
+      req.user.id,
+      req.body.oldPassword,
+      req.body.newPassword,
+    );
     return sendSuccess(res, result, "Password changed successfully");
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const getUser = async (req, res, next) => {
   try {
-    const result = await getMe(req.user.id)
-    return sendSuccess(res, result, "User Fetched Successfully")
+    const result = await getMe(req.user.id);
+    return sendSuccess(res, result, "User Fetched Successfully");
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const updateProfileUser = async (req, res, next) => {
   try {
-    const result = await updateProfile(req.user.id, req.body)
-    return sendSuccess(res, result, "User Profile Updated Successfully")
+    const result = await updateProfile(req.user.id, req.body);
+    return sendSuccess(res, result, "User Profile Updated Successfully");
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
+
+const logoutUser = async (req, res, next) => {
+  try {
+    return sendSuccess(res, null, "User logged out successfully");
+    logger.info("User Logged Out Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
 export {
   signUpAdmin,
   signUpStaff,
@@ -101,4 +115,5 @@ export {
   changePasswordUser,
   getUser,
   updateProfileUser,
+  logoutUser,
 };
