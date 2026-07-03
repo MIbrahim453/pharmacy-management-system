@@ -113,4 +113,66 @@ export const yupResolver = (schema) => async (data) => {
     };
   }
 };
+export const medicineCreateSchema = yup.object().shape({
+  name: yup
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .required("Name is required"),
+  brand: yup
+    .string()
+    .min(2, "Brand must be at least 2 characters")
+    .max(100, "Brand cannot exceed 100 characters")
+    .required("Brand is required"),
+  category: yup
+    .string()
+    .min(2, "Category must be at least 2 characters")
+    .max(100, "Category cannot exceed 100 characters")
+    .required("Category is required"),
+  expiryDate: yup
+    .date()
+    .typeError("Please enter a valid expiry date")
+    .required("Expiry date is required"),
+  stockQty: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .typeError("Stock quantity must be a number")
+    .integer("Stock quantity must be an integer")
+    .min(0, "Stock quantity cannot be negative")
+    .required("Stock quantity is required"),
+  reorderLevel: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+    .typeError("Reorder level must be a number")
+    .integer("Reorder level must be an integer")
+    .min(0, "Reorder level cannot be negative")
+    .optional(),
+  tabPrice: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .typeError("Price per tab must be a number")
+    .positive("Price per tab must be positive")
+    .required("Price per tab is required"),
+  stripPrice: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .typeError("Price per strip must be a number")
+    .positive("Price per strip must be positive")
+    .required("Price per strip is required"),
+  packPrice: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .typeError("Price per pack must be a number")
+    .positive("Price per pack must be positive")
+    .required("Price per pack is required"),
+  status: yup
+    .string()
+    .oneOf(["inStock", "lowStock", "critical"], "Status must be In stock, Low stock, or Critical")
+    .required("Status is required"),
+});
+
+export const medicineEditSchema = medicineCreateSchema.shape({
+  name: yup.string().min(2).max(100).optional(),
+});
+
 export default yupResolver;

@@ -4,6 +4,7 @@ import { config } from "./config/index.js";
 import dns from "dns";
 import logger from "./utils/logger.js";
 import seedRoles from "./database/seed/role.seed.js";
+import seedCategories from "./database/seed/category.seed.js"
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -12,6 +13,7 @@ const startServer = async () => {
     await connectDB();
     logger.info("Database connected to server");
     await seedRoles()
+    await seedCategories()
     const server = app.listen(config.port, () => {
        logger.info(`Server running on port ${config.port}`);
     });
