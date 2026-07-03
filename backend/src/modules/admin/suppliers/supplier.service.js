@@ -100,7 +100,7 @@ const getSuppliers = async (filters) => {
   const suppliers = await Supplier.find({
     $or: [
       { name: { $regex: name, $options: "i" } },
-      { contact: { $regex: contact, $options: "I" } },
+      { contact: { $regex: contact, $options: "i" } },
     ],
     ...(id && { _id: id }),
     ...(name && { name: name }),
