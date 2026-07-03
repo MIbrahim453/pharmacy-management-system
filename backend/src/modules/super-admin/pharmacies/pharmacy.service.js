@@ -96,7 +96,7 @@ const getDashboardStats = async () => {
   });
 
   const avgUsers =
-    totalPharmacies === 0 ? 0 : Math.round(activeUsers / totalPharmacies);
+    totalPharmacies === 0 ? 0 : Math.round(activeStaff / totalPharmacies);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
