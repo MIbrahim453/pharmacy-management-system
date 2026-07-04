@@ -58,7 +58,6 @@ export const mapFrontendToBackend = (data) => {
     tabPrice: Number(data.tabPrice),
     stripPrice: Number(data.stripPrice),
     packPrice: Number(data.packPrice),
-    status: data.status,
   };
 };
 
@@ -98,4 +97,11 @@ export const viewMedicine = async (id) => {
 export const getCategoryNames = async () => {
   const response = await api.get("/admin-medicines/category-names");
   return response.data?.data || [];
+};
+
+export const updateMedicineStock = async (id, stockQty) => {
+  const response = await api.put(`/admin-medicines/edit-medicine/${id}`, {
+    stockQty: Number(stockQty),
+  });
+  return mapBackendToFrontend(response.data?.data);
 };

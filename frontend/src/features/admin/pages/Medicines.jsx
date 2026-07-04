@@ -431,16 +431,6 @@ export default function Medicines() {
             step="0.01"
             error={addErrors.packPrice?.message}
           />
-          <Select
-            label="Status"
-            {...registerAdd('status')}
-            options={[
-              { value: 'inStock', label: 'In stock' },
-              { value: 'lowStock', label: 'Low stock' },
-              { value: 'critical', label: 'Critical' },
-            ]}
-            error={addErrors.status?.message}
-          />
         </form>
       </Modal>
 
@@ -531,16 +521,12 @@ export default function Medicines() {
             step="0.01"
             error={editErrors.packPrice?.message}
           />
-          <Select
-            label="Status"
-            {...registerEdit('status')}
-            options={[
-              { value: 'inStock', label: 'In stock' },
-              { value: 'lowStock', label: 'Low stock' },
-              { value: 'critical', label: 'Critical' },
-            ]}
-            error={editErrors.status?.message}
-          />
+          <div className="flex flex-col gap-1.5 justify-center">
+            <span className="text-xs font-semibold text-on-surface-variant">Status (Auto-calculated)</span>
+            <div className="mt-1">
+              <Badge status={selected?.status} dot>{selected?.status}</Badge>
+            </div>
+          </div>
         </form>
       </Modal>
 

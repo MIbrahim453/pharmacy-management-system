@@ -6,6 +6,7 @@ import userRoutes from "../modules/super-admin/users/user.routes.js";
 import medicineRoutes from "../modules/admin/medicines/medicine.routes.js";
 import supplierRoutes from "../modules/admin/suppliers/supplier.routes.js";
 import staffRoutes from "../modules/admin/staffDetails/staff.routes.js";
+import inventoryRoutes from "../modules/admin/inventory/inventory.routes.js";
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use(`${API_PREFIX}/super-admin-users`, userRoutes);
 router.use(`${API_PREFIX}/admin-medicines`, medicineRoutes);
 router.use(`${API_PREFIX}/admin-suppliers`, supplierRoutes);
 router.use(`${API_PREFIX}/admin-staff-details`, staffRoutes);
+router.use(`${API_PREFIX}/admin-inventory`, inventoryRoutes);
 
 export default router;

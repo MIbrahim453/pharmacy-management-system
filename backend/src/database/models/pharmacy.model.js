@@ -33,6 +33,15 @@ const pharmacySchema = new mongoose.Schema(
       type: String,
       enum: ["active", "inactive", "suspended"],
       default: "inactive",
+      required: true,
+    },
+    lowStockThreshold: {
+      type: Number,
+      default: 20
+    },
+    criticalStockThreshold: {
+      type: Number,
+      default: 5
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

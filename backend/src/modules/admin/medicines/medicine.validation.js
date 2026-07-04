@@ -10,7 +10,6 @@ const medicineCreateValidation = joi.object({
   tabPrice: joi.number().positive().required(),
   stripPrice: joi.number().positive().required(),
   packPrice: joi.number().positive().required(),
-  status: joi.string().valid("inStock", "lowStock", "critical").optional(),
 });
 
 const medicineEditValidation = joi
@@ -24,7 +23,6 @@ const medicineEditValidation = joi
     tabPrice: joi.number().positive().optional(),
     stripPrice: joi.number().positive().optional(),
     packPrice: joi.number().positive().optional(),
-    status: joi.string().valid("inStock", "lowStock", "critical").optional(),
   })
   .min(1);
 

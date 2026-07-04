@@ -168,7 +168,7 @@ export const medicineCreateSchema = yup.object().shape({
   status: yup
     .string()
     .oneOf(["inStock", "lowStock", "critical"], "Status must be In stock, Low stock, or Critical")
-    .required("Status is required"),
+    .optional(),
 });
 
 export const medicineEditSchema = medicineCreateSchema.shape({

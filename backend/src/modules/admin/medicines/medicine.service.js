@@ -2,6 +2,7 @@ import Medicine from "../../../database/models/medicine.model.js";
 import Category from "../../../database/models/category.model.js";
 import logger from "../../../utils/logger.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
+import Pharmacy from "../../../database/models/pharmacy.model.js";
 
 const addMedicine = async (userId, data) => {
   const existingMedicine = await Medicine.findOne({
@@ -32,10 +33,21 @@ const addMedicine = async (userId, data) => {
     tabPrice: data.tabPrice,
     stripPrice: data.stripPrice,
     packPrice: data.packPrice,
-    status: data.status,
     createdBy: userId,
   });
 
+  const pharmacySettings = await Pharmacy.findOne({owner: userId})
+
+  if(data.stockQty <= pharmacySettings.lowStockThreshold){
+    createMedicine.status = "lowStock"
+  } else if(data.stockQty <= pharmacySettings.criticalStockThreshold){
+    createMedicine.status = "critical"
+  } else {
+    createMedicine.status = "inStock"
+  }
+
+  await createMedicine.save()
+  
   const medicine = await Medicine.findById(createMedicine._id)
   .populate("category")
   .populate("createdBy", "name email");
@@ -74,7 +86,6 @@ const editMedicine = async (userId, id, data) => {
         tabPrice: data.tabPrice,
         stripPrice: data.stripPrice,
         packPrice: data.packPrice,
-        status: data.status,
         createdBy: userId,
       },
     },
@@ -82,6 +93,17 @@ const editMedicine = async (userId, id, data) => {
       new: true,
     },
   );
+
+  const pharmacySettings = await Pharmacy.findOne({owner: userId})
+
+  if(data.stockQty <= pharmacySettings.lowStockThreshold){
+    updateMedicine.status = "lowStock"
+  } else if(data.stockQty <= pharmacySettings.criticalStockThreshold){
+    updateMedicine.status = "critical"
+  } else {
+    updateMedicine.status = "inStock"
+  }
+  await updateMedicine.save()
 
   const medicine = await Medicine.findById(updateMedicine._id)
     .populate("category")
