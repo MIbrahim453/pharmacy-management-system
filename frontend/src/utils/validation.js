@@ -201,4 +201,23 @@ export const supplierEditSchema = supplierCreateSchema.shape({
   name: yup.string().min(2).max(100).optional(),
 });
 
+export const staffRegisterSchema = yup.object().shape({
+  name: yup
+    .string()
+    .min(3, "Full name must be at least 3 characters")
+    .max(30, "Full name cannot exceed 30 characters")
+    .required("Full name is required"),
+  email: yup
+    .string()
+    .email("Please enter a valid email address")
+    .required("Email is required"),
+  role: yup
+    .string()
+    .oneOf(["Pharmacist", "Cashier", "Inventory"], "Invalid staff role")
+    .required("Role is required"),
+  counter: yup.string().optional(),
+});
+
+export const staffEditSchema = staffRegisterSchema;
+
 export default yupResolver;

@@ -22,8 +22,16 @@ const userSchema = new mongoose.Schema(
     },
     staffRole: {
       type: String,
-      enum: ["manager", "pharmacist", "cashier"],
+      enum: ["Manager", "Pharmacist", "Cashier"],
       default: null,
+    },
+    staffCounter: {
+      type: String,
+    },
+    staffInvoices: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Invoice",
+      default: null
     },
     pharmacyId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -32,7 +40,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "inactive"],
+      enum: ["active", "inactive", "suspended"],
       default: "active",
     },
     lastActive: {

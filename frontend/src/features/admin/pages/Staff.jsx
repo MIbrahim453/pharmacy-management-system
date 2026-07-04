@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { UserPlus, Users, Eye, Pencil, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { useForm } from 'react-hook-form';
 import PageHeader from '../../../components/common/PageHeader';
 import SearchBar from '../../../components/common/SearchBar';
 import { Card } from '../../../components/ui/Card';
@@ -13,21 +15,20 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
 import { initials } from '../../../utils/helpers';
-
-// TODO: Replace with API call — GET /api/admin/staff
-const STAFF = [
-  { name: 'Fatima Sheikh', email: 'fatima@pharmacy.pk', role: 'Pharmacist', counter: 'Counter 1', invoices: 142, last: '30 min ago', status: 'Active' },
-  { name: 'Bilal Hassan', email: 'bilal@pharmacy.pk', role: 'Cashier', counter: 'Counter 2', invoices: 98, last: '2 hrs ago', status: 'Active' },
-  { name: 'Nadia Ahmed', email: 'nadia@pharmacy.pk', role: 'Inventory', counter: '', invoices: 0, last: 'Yesterday', status: 'Active' },
-  { name: 'Rizwan Khan', email: 'rizwan@pharmacy.pk', role: 'Pharmacist', counter: 'Counter 3', invoices: 210, last: '1 day ago', status: 'Suspended' },
-];
-
+import { yupResolver, staffRegisterSchema, staffEditSchema } from '../../../utils/validation';
+import {
+  registerStaff,
+  getAllStaff,
+  editStaffDetails,
+  deleteStaffDetails,
+  changeStaffStatus,
+} from '../../../services/staffService';
 
 const PER_PAGE = 8;
-const BLANK = { name: '', email: '', role: 'Pharmacist', counter: '' };
 
 export default function Staff() {
-  const [list, setList] = useState(STAFF);
+  const { user } = useSelector((state) => state.auth);
+  const [list, setList] = useState([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState(false);
@@ -35,58 +36,158 @@ export default function Staff() {
   const [viewModal, setViewModal] = useState(false);
   const [delModal, setDelModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(BLANK);
   const [selected, setSelected] = useState(null);
 
-  const filtered = list.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()) || s.email.toLowerCase().includes(query.toLowerCase()));
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const field = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // Add Form Configuration
+  const {
+    register: registerAdd,
+    handleSubmit: handleSubmitAdd,
+    reset: resetAdd,
+    formState: { errors: addErrors },
+  } = useForm({
+    resolver: yupResolver(staffRegisterSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      role: 'Pharmacist',
+      counter: '',
+    },
+  });
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setList([{ ...form, invoices: 0, last: 'Just now', status: 'Active' }, ...list]);
-    toast.success(`${form.name} added as staff`);
-    setModal(false);
-    setForm(BLANK);
-    setLoading(false);
+  // Edit Form Configuration
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm({
+    resolver: yupResolver(staffEditSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      role: 'Pharmacist',
+      counter: '',
+    },
+  });
+
+  const fetchStaff = async () => {
+    if (!user || !user.pharmacyId) return;
+    try {
+      const data = await getAllStaff(user.pharmacyId, query);
+      setList(data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch staff members');
+    }
   };
 
-  const handleEdit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchStaff();
+    setPage(1);
+  }, [query, user]);
+
+  const filtered = list;
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const openAdd = () => {
+    resetAdd({
+      name: '',
+      email: '',
+      role: 'Pharmacist',
+      counter: '',
+    });
+    setModal(true);
+  };
+
+  const handleAdd = async (data) => {
+    if (!user || !user.pharmacyId) {
+      toast.error('You must belong to a pharmacy to register staff members');
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const updated = list.map((s) => s.email === selected?.email ? { ...s, ...form } : s);
-    setList(updated);
-    toast.success(`${form.name} updated successfully`);
-    setEditModal(false);
-    setSelected(null);
-    setForm(BLANK);
-    setLoading(false);
+    try {
+      const staffData = await registerStaff({
+        ...data,
+        pharmacyId: user.pharmacyId,
+      });
+
+      const newStaffItem = {
+        id: staffData._id,
+        name: staffData.name,
+        email: staffData.email,
+        role: staffData.staffRole,
+        counter: staffData.staffCounter || '',
+        invoices: 0,
+        last: 'Never',
+        status: 'Active',
+      };
+      setList((prev) => [newStaffItem, ...prev]);
+      toast.success(`${staffData.name} registered as staff`);
+      setModal(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to register staff member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEdit = (s) => {
+    setSelected(s);
+    resetEdit({
+      name: s.name,
+      email: s.email,
+      role: s.role,
+      counter: s.counter || '',
+    });
+    setEditModal(true);
+  };
+
+  const handleEdit = async (data) => {
+    setLoading(true);
+    try {
+      const updatedStaff = await editStaffDetails(selected.id, data);
+      setList((prev) => prev.map((s) => (s.id === selected.id ? updatedStaff : s)));
+      toast.success(`${updatedStaff.name} updated successfully`);
+      setEditModal(false);
+      setSelected(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update staff member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDel = (s) => {
+    setSelected(s);
+    setDelModal(true);
   };
 
   const handleDelete = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    const updated = list.filter((s) => s.email !== selected?.email);
-    setList(updated);
-    toast.success(`${selected?.name} removed from staff`);
-    setDelModal(false);
-    setSelected(null);
-    setLoading(false);
+    try {
+      await deleteStaffDetails(selected.id);
+      setList((prev) => prev.filter((s) => s.id !== selected.id));
+      toast.success(`${selected?.name} removed from staff`);
+      setDelModal(false);
+      setSelected(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to remove staff member');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleStatus = (email) => {
-    const updated = list.map((s) => s.email === email ? { ...s, status: s.status === 'Active' ? 'Suspended' : 'Active' } : s);
-    setList(updated);
-    const item = list.find((s) => s.email === email);
-    toast.success(`${item.name} ${item.status === 'Active' ? 'suspended' : 'activated'}`);
+  const toggleStatus = async (sItem) => {
+    const newBackendStatus = sItem.status === 'Active' ? 'suspended' : 'active';
+    try {
+      const updatedStaff = await changeStaffStatus(sItem.id, newBackendStatus);
+      setList((prev) => prev.map((s) => (s.id === sItem.id ? updatedStaff : s)));
+      toast.success(`${sItem.name} status updated to ${updatedStaff.status.toLowerCase()}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update staff status');
+    }
   };
 
   const openView = (s) => { setSelected(s); setViewModal(true); };
-  const openEdit = (s) => { setSelected(s); setForm({ name: s.name, email: s.email, role: s.role, counter: s.counter || '' }); setEditModal(true); };
-  const openDel = (s) => { setSelected(s); setDelModal(true); };
 
   return (
     <>
@@ -94,7 +195,7 @@ export default function Staff() {
         title="Staff"
         subtitle={`${list.filter(s => s.status === 'Active').length} active staff members`}
         actions={
-          <Button size="sm" icon={<UserPlus size={15} />} onClick={() => setModal(true)}>
+          <Button size="sm" icon={<UserPlus size={15} />} onClick={openAdd}>
             Add staff
           </Button>
         }
@@ -117,7 +218,7 @@ export default function Staff() {
             {paginated.length === 0 ? (
               <TableEmpty cols={7} message="No staff found" icon={<Users size={32} />} />
             ) : paginated.map((s, i) => (
-              <motion.tr key={s.email} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+              <motion.tr key={s.id || s.email} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
                 <Td>
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-bold">
@@ -143,7 +244,7 @@ export default function Staff() {
                       <Pencil size={15} />
                     </button>
                     <button
-                      onClick={() => toggleStatus(s.email)}
+                      onClick={() => toggleStatus(s)}
                       className={`btn-ghost px-2 py-1 text-xs rounded-lg font-semibold ${s.status === 'Active' ? 'text-warning hover:bg-warning/[0.08]' : 'text-primary hover:bg-primary/[0.08]'}`}
                     >
                       {s.status === 'Active' ? 'Suspend' : 'Activate'}
@@ -175,12 +276,12 @@ export default function Staff() {
           </div>
         }
       >
-        <form id="staff-form" onSubmit={handleAdd} className="p-6 space-y-4">
-          <Input label="Full name" value={form.name} onChange={(e) => field('name', e.target.value)} required />
-          <Input label="Email" type="email" value={form.email} onChange={(e) => field('email', e.target.value)} required placeholder="staff@pharmacy.pk" />
+        <form id="staff-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 space-y-4">
+          <Input label="Full name" {...registerAdd('name')} required error={addErrors.name?.message} />
+          <Input label="Email" type="email" {...registerAdd('email')} required placeholder="staff@pharmacy.pk" error={addErrors.email?.message} />
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Role" value={form.role} onChange={(e) => field('role', e.target.value)} options={['Pharmacist', 'Cashier', 'Inventory']} />
-            <Input label="Counter (optional)" value={form.counter} onChange={(e) => field('counter', e.target.value)} placeholder="Counter 1" />
+            <Select label="Role" {...registerAdd('role')} options={['Pharmacist', 'Cashier', 'Inventory']} error={addErrors.role?.message} />
+            <Input label="Counter (optional)" {...registerAdd('counter')} placeholder="Counter 1" error={addErrors.counter?.message} />
           </div>
           <div className="rounded-xl bg-primary/[0.08] border border-primary/30 p-3 text-xs text-primary">
             A temporary password will be emailed to the new staff member.
@@ -200,12 +301,12 @@ export default function Staff() {
           </div>
         }
       >
-        <form id="staff-edit-form" onSubmit={handleEdit} className="p-6 space-y-4">
-          <Input label="Full name" value={form.name} onChange={(e) => field('name', e.target.value)} required />
-          <Input label="Email" type="email" value={form.email} onChange={(e) => field('email', e.target.value)} required placeholder="staff@pharmacy.pk" disabled />
+        <form id="staff-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+          <Input label="Full name" {...registerEdit('name')} required error={editErrors.name?.message} />
+          <Input label="Email" type="email" {...registerEdit('email')} required placeholder="staff@pharmacy.pk" disabled error={editErrors.email?.message} />
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Role" value={form.role} onChange={(e) => field('role', e.target.value)} options={['Pharmacist', 'Cashier', 'Inventory']} />
-            <Input label="Counter" value={form.counter} onChange={(e) => field('counter', e.target.value)} placeholder="Counter 1" />
+            <Select label="Role" {...registerEdit('role')} options={['Pharmacist', 'Cashier', 'Inventory']} error={editErrors.role?.message} />
+            <Input label="Counter" {...registerEdit('counter')} placeholder="Counter 1" error={editErrors.counter?.message} />
           </div>
         </form>
       </Modal>

@@ -95,7 +95,7 @@ const createAdmin = async (user, data) => {
 };
 
 const createStaff = async (user, data) => {
-  const { name, email, pharmacyId, staffRole } = data;
+  const { name, email, pharmacyId, staffRole, staffCounter } = data;
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -118,6 +118,7 @@ const createStaff = async (user, data) => {
     password: hashPassword,
     role: userRole._id,
     staffRole,
+    staffCounter,
     createdBy: user.id,
     pharmacyId,
   });
@@ -144,6 +145,7 @@ const createStaff = async (user, data) => {
       email: staff.email,
       role: userRole.name,
       staffRole: staff.staffRole,
+      staffCounter: staff.staffCounter,
       pharmacyId: staff.pharmacyId,
       createdBy: staff.createdBy,
     },
@@ -186,7 +188,7 @@ const login = async (user, req) => {
   });
 
   await User.findByIdAndUpdate(user.id, {
-    lastLogin: new Date(),
+    lastActive: new Date(),
   });
 
   const userWithRole = await User.findById(user.id)
