@@ -2,7 +2,7 @@ import Medicine from "../../../database/models/medicine.model.js";
 import Category from "../../../database/models/category.model.js";
 import logger from "../../../utils/logger.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
-import Pharmacy from "../../../database/models/pharmacy.model.js";
+import MedicineBatch from "../../../database/models/medicineBatch.model.js";
 
 const addMedicine = async (userId, data) => {
   const existingMedicine = await Medicine.findOne({
@@ -11,7 +11,7 @@ const addMedicine = async (userId, data) => {
   });
   if (existingMedicine) {
     throw new BadRequestError(
-      "Medicine Already Registered. You can edit or delete it to add a new one",
+      "Medicine Already Registered. You can edit or delete it to add a new one"
     );
   }
 
@@ -23,34 +23,22 @@ const addMedicine = async (userId, data) => {
     const newCategory = await Category.create({ name: data.category });
     categoryId = newCategory._id;
   }
+
   const createMedicine = await Medicine.create({
     name: data.name,
-    brand: data.brand,
-    expiryDate: data.expiryDate,
+    genericName: data.genericName,
     category: categoryId,
-    stockQty: data.stockQty,
-    reorderLevel: data.reorderLevel,
-    tabPrice: data.tabPrice,
-    stripPrice: data.stripPrice,
-    packPrice: data.packPrice,
+    manufacturer: data.manufacturer,
+    saleUnit: data.saleUnit,
+    stockQty: 0,
+    reorderLevel: data.reorderLevel || 0,
+    status: "critical",
     createdBy: userId,
   });
 
-  const pharmacySettings = await Pharmacy.findOne({owner: userId})
-
-  if(data.stockQty <= pharmacySettings.lowStockThreshold){
-    createMedicine.status = "lowStock"
-  } else if(data.stockQty <= pharmacySettings.criticalStockThreshold){
-    createMedicine.status = "critical"
-  } else {
-    createMedicine.status = "inStock"
-  }
-
-  await createMedicine.save()
-  
   const medicine = await Medicine.findById(createMedicine._id)
-  .populate("category")
-  .populate("createdBy", "name email");
+    .populate("category")
+    .populate("createdBy", "name email");
   
   logger.info("Medicine Added Successfully");
 
@@ -64,7 +52,6 @@ const editMedicine = async (userId, id, data) => {
   }
 
   let categoryId;
-
   const existingCategory = await Category.findOne({ name: data.category });
   if (existingCategory) {
     categoryId = existingCategory._id;
@@ -73,39 +60,23 @@ const editMedicine = async (userId, id, data) => {
     categoryId = newCategory._id;
   }
 
-  const updateMedicine = await Medicine.findByIdAndUpdate(
+  await Medicine.findByIdAndUpdate(
     id,
     {
       $set: {
         name: data.name,
-        brand: data.brand,
-        expiryDate: data.expiryDate,
+        genericName: data.genericName,
         category: categoryId,
-        stockQty: data.stockQty,
+        manufacturer: data.manufacturer,
+        saleUnit: data.saleUnit,
+        sellingPrice: data.sellingPrice,
         reorderLevel: data.reorderLevel,
-        tabPrice: data.tabPrice,
-        stripPrice: data.stripPrice,
-        packPrice: data.packPrice,
         createdBy: userId,
       },
-    },
-    {
-      new: true,
-    },
+    }
   );
 
-  const pharmacySettings = await Pharmacy.findOne({owner: userId})
-
-  if(data.stockQty <= pharmacySettings.lowStockThreshold){
-    updateMedicine.status = "lowStock"
-  } else if(data.stockQty <= pharmacySettings.criticalStockThreshold){
-    updateMedicine.status = "critical"
-  } else {
-    updateMedicine.status = "inStock"
-  }
-  await updateMedicine.save()
-
-  const medicine = await Medicine.findById(updateMedicine._id)
+  const medicine = await Medicine.findById(id)
     .populate("category")
     .populate("createdBy", "name email");
 
@@ -115,9 +86,13 @@ const editMedicine = async (userId, id, data) => {
 };
 
 const deleteMedicine = async (id) => {
-  const deleteMedicine = await Medicine.findByIdAndDelete(id);
+  const activeBatchesCount = await MedicineBatch.countDocuments({ medicineId: id });
+  if (activeBatchesCount > 0) {
+    throw new BadRequestError("Cannot delete medicine with active inventory batches or history.");
+  }
 
-  if (!deleteMedicine) {
+  const deleteMed = await Medicine.findByIdAndDelete(id);
+  if (!deleteMed) {
     throw new BadRequestError("Failed To delete Medicine");
   }
 
@@ -139,40 +114,46 @@ const viewMedicine = async (id) => {
 };
 
 const getMedicines = async (filters) => {
-    const { id, name = "", category = "", startIndex = 0, limit = 1000, order = "asc", searchTerm = "" } = filters
+  const { id, name = "", category = "", startIndex = 0, limit = 1000, order = "asc", searchTerm = "" } = filters;
 
-    const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1
-    const catId = []
-    if(searchTerm){
-        const categories = await Category.find(
-            {
-                name: { $regex: searchTerm, $options: "i"}
-            }
-        ).select("_id")
-        categories.forEach(category => {
-            catId.push(category._id)
-        })
-    }
-    const medicines = await Medicine.find({
-        $or: [
-            {
-                name: { $regex: searchTerm || "", $options: "i"}
-            },
-            ...(catId.length > 0 ? [{category: {$in: catId}}] : [] )
-        ],
-        ...(id && { _id: id}),
-        ...(name && { name: name})
-    })
+  const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
+  const catId = [];
+  
+  if (searchTerm) {
+    const categories = await Category.find({
+      name: { $regex: searchTerm, $options: "i" }
+    }).select("_id");
+    categories.forEach(category => {
+      catId.push(category._id);
+    });
+  }
+
+  const medicines = await Medicine.find({
+    $or: [
+      {
+        name: { $regex: searchTerm || "", $options: "i" }
+      },
+      {
+        genericName: { $regex: searchTerm || "", $options: "i" }
+      },
+      {
+        manufacturer: { $regex: searchTerm || "", $options: "i" }
+      },
+      ...(catId.length > 0 ? [{ category: { $in: catId } }] : [])
+    ],
+    ...(id && { _id: id }),
+    ...(name && { name: name })
+  })
     .skip(Number(startIndex))
     .limit(Number(limit))
-    .sort({ updatedAt: sortDirection})
+    .sort({ updatedAt: sortDirection })
     .populate("category", "name")
-    .populate("createdBy", "name email")
+    .populate("createdBy", "name email");
 
-    logger.info("Medicines Fetched Successfully")
+  logger.info("Medicines Fetched Successfully");
 
-    return medicines
-}
+  return medicines;
+};
 
 const getMedicineCategoryNames = async () => {
   const categories = await Category.find().select("name -_id").sort({ name: 1 });
@@ -181,10 +162,10 @@ const getMedicineCategoryNames = async () => {
 };
 
 export {
-    addMedicine,
-    editMedicine,
-    deleteMedicine,
-    viewMedicine,
-    getMedicines,
-    getMedicineCategoryNames,
-}
+  addMedicine,
+  editMedicine,
+  deleteMedicine,
+  viewMedicine,
+  getMedicines,
+  getMedicineCategoryNames,
+};
