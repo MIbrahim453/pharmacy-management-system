@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { User as UserIcon, Mail, Lock, Save, Camera } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Save, Camera, Percent, ShieldAlert, AlertTriangle } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
@@ -10,7 +10,7 @@ import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import api from '../../../services/axios';
 import { updateProfile } from '../../../store/authSlice';
-import { yupResolver, profileSchema, changePasswordSchema } from '../../../utils/validation';
+import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema } from '../../../utils/validation';
 
 function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -22,7 +22,9 @@ export default function Profile() {
 
   const [saving, setSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
+  const [pharmacySaving, setPharmacySaving] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
+  const [pharmacy, setPharmacy] = useState(null);
 
   // Profile Form configuration
   const {
@@ -46,6 +48,17 @@ export default function Profile() {
     defaultValues: { current: '', next: '', confirm: '' },
   });
 
+  // Pharmacy Settings Form configuration
+  const {
+    register: registerSettings,
+    handleSubmit: handleSubmitSettings,
+    reset: resetSettings,
+    formState: { errors: settingsErrors },
+  } = useForm({
+    resolver: yupResolver(pharmacySettingsSchema),
+    defaultValues: { discount: '0', lowStockThreshold: '20', criticalStockThreshold: '10' },
+  });
+
   // Sync state from redux on load
   useEffect(() => {
     if (reduxUser) {
@@ -60,12 +73,20 @@ export default function Profile() {
         const response = await api.get('/auth/me');
         const userData = response.data.data;
         resetProfile({ name: userData.name, email: userData.email });
+        if (userData.pharmacyId) {
+          setPharmacy(userData.pharmacyId);
+          resetSettings({
+            discount: String(userData.pharmacyId.discount ?? 0),
+            lowStockThreshold: String(userData.pharmacyId.lowStockThreshold ?? 20),
+            criticalStockThreshold: String(userData.pharmacyId.criticalStockThreshold ?? 10),
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch latest user info:', error);
       }
     };
     fetchFreshUser();
-  }, [resetProfile]);
+  }, [resetProfile, resetSettings]);
 
   const saveProfile = async (data) => {
     setSaving(true);
@@ -104,6 +125,28 @@ export default function Profile() {
     }
   };
 
+  const savePharmacySettings = async (data) => {
+    setPharmacySaving(true);
+    try {
+      const pId = pharmacy?._id || reduxUser?.pharmacyId;
+      if (!pId) {
+        toast.error('Pharmacy ID not found');
+        return;
+      }
+      const response = await api.put(`/super-admin-pharmacies/settings/${pId}`, {
+        discount: Number(data.discount),
+        lowStockThreshold: Number(data.lowStockThreshold),
+        criticalStockThreshold: Number(data.criticalStockThreshold),
+      });
+      toast.success('Pharmacy settings updated successfully');
+      setPharmacy(response.data?.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update pharmacy settings');
+    } finally {
+      setPharmacySaving(false);
+    }
+  };
+
   const formatRole = (role) => {
     if (role === 'super') return 'Super Admin';
     if (role === 'admin') return 'Admin';
@@ -115,7 +158,7 @@ export default function Profile() {
   const profileDetails = [];
   // Only add Pharmacy if user is NOT super admin
   if (reduxUser?.role !== 'super') {
-    profileDetails.push(['Pharmacy', reduxUser?.pharmacyName || 'N/A']);
+    profileDetails.push(['Pharmacy', pharmacy?.pharmacy_name || reduxUser?.pharmacyName || 'N/A']);
   }
   profileDetails.push(['Role', formatRole(reduxUser?.role)]);
   profileDetails.push(['Status', 'Active']);
@@ -177,6 +220,48 @@ export default function Profile() {
               </form>
             </CardBody>
           </Card>
+
+          {/* Pharmacy Settings Form (Only visible to admin) */}
+          {reduxUser?.role === 'admin' && (
+            <Card>
+              <CardHeader><CardTitle>Pharmacy Settings</CardTitle></CardHeader>
+              <CardBody>
+                <form onSubmit={handleSubmitSettings(savePharmacySettings)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Input
+                      label="Default Discount (%)"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      prefix={<Percent size={15} />}
+                      {...registerSettings('discount')}
+                      error={settingsErrors.discount?.message}
+                    />
+                    <Input
+                      label="Low Stock Threshold"
+                      type="number"
+                      min="0"
+                      prefix={<AlertTriangle size={15} />}
+                      {...registerSettings('lowStockThreshold')}
+                      error={settingsErrors.lowStockThreshold?.message}
+                    />
+                    <Input
+                      label="Critical Stock Threshold"
+                      type="number"
+                      min="0"
+                      prefix={<ShieldAlert size={15} />}
+                      {...registerSettings('criticalStockThreshold')}
+                      error={settingsErrors.criticalStockThreshold?.message}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit" size="sm" loading={pharmacySaving} icon={<Save size={15} />}>Save settings</Button>
+                  </div>
+                </form>
+              </CardBody>
+            </Card>
+          )}
 
           {/* Password form */}
           <Card>

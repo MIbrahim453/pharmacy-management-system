@@ -2,7 +2,7 @@ import express from "express";
 import { authenticate } from "../../../middlewares/auth.js";
 import validate from "../../../middlewares/validation.js";
 import authorizeRole from "../../../middlewares/rbac.js";
-import { editPharmacyValidation } from "./pharmacy.validation.js";
+import { editPharmacyValidation, pharmacySettingsValidation } from "./pharmacy.validation.js";
 import {
   dashboardStats,
   getAllPharmacies,
@@ -11,6 +11,7 @@ import {
   pharmacyStatus,
   pharmacyView,
   signUpTrends,
+  updatePharmacySettings,
 } from "./pharmacy.controller.js";
 
 const router = express.Router();
@@ -21,6 +22,14 @@ router.put(
   authorizeRole("super_admin", "admin"),
   validate(editPharmacyValidation),
   pharmacyEdit,
+);
+
+router.put(
+  "/settings/:id",
+  authenticate,
+  authorizeRole("admin"),
+  validate(pharmacySettingsValidation),
+  updatePharmacySettings,
 );
 
 router.delete(

@@ -5,9 +5,11 @@ import {
   getDashboardStats,
   getPharmacies,
   getSignUpTrend,
+  pharmacySettings,
   viewPharmacy,
 } from "./pharmacy.service.js";
 import { sendSuccess } from "../../../utils/response.js";
+import { UnauthorizedError } from "../../../utils/errors.js";
 
 const pharmacyEdit = async (req, res, next) => {
   try {
@@ -39,6 +41,10 @@ const getAllPharmacies = async (req, res, next) => {
 
 const pharmacyView = async (req, res, next) => {
   try {
+    const role = req.user.role?.name ?? req.user.role;
+    if (role === "admin" && String(req.user.pharmacyId) !== String(req.params.id)) {
+      throw new UnauthorizedError("Access Denied. You can only view details of your own pharmacy.");
+    }
     const result = await viewPharmacy(req.params.id);
     return sendSuccess(res, result, "Pharmacy Fetched Successfully");
   } catch (error) {
@@ -73,6 +79,18 @@ const pharmacyStatus = async (req, res, next) => {
   }
 };
 
+const updatePharmacySettings = async (req, res, next) => {
+  try {
+    if (String(req.user.pharmacyId) !== String(req.params.id)) {
+      throw new UnauthorizedError("Access Denied. You can only update settings for your own pharmacy.");
+    }
+    const result = await pharmacySettings(req.params.id, req.body);
+    return sendSuccess(res, result, "Pharmacy Settings Updated Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   pharmacyEdit,
   pharmacyDelete,
@@ -81,4 +99,5 @@ export {
   dashboardStats,
   signUpTrends,
   pharmacyStatus,
+  updatePharmacySettings,
 };

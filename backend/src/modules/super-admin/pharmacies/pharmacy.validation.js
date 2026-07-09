@@ -24,4 +24,16 @@ const editPharmacyValidation = joi.object({
   status: joi.string().valid("active", "inactive"),
 });
 
-export { createPharmacyValidation, editPharmacyValidation };
+const pharmacySettingsValidation = joi
+  .object({
+    discount: joi.number().min(0).max(100).optional(),
+    lowStockThreshold: joi.number().min(0).optional(),
+    criticalStockThreshold: joi.number().min(0).optional(),
+  })
+  .min(1);
+
+export {
+  createPharmacyValidation,
+  editPharmacyValidation,
+  pharmacySettingsValidation,
+};

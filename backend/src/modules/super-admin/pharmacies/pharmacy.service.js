@@ -3,6 +3,7 @@ import { NotFoundError, BadRequestError } from "../../../utils/errors.js";
 import logger from "../../../utils/logger.js";
 import User from "../../../database/models/user.model.js";
 import Role from "../../../database/models/role.model.js";
+import { connect } from "net";
 
 const editPharmacy = async (id, data) => {
   const pharmacy = await Pharmacy.findById(id);
@@ -322,6 +323,27 @@ const changeStatus = async (id, status) => {
   return pharmacy;
 };
 
+const pharmacySettings = async (id, data) => {
+  const pharmacy = await Pharmacy.findById(id) .populate("owner", "-password")
+    .populate("createdBy", "-password");
+  if(!pharmacy){
+    throw new NotFoundError("Pharmacy Not Found")
+  }
+
+  if(data.discount){
+    pharmacy.discount = data.discount
+  }
+  if(data.lowStockThreshold){
+    pharmacy.lowStockThreshold = data.lowStockThreshold
+  }
+  if(data.criticalStockThreshold){
+    pharmacy.criticalStockThreshold = data.criticalStockThreshold
+  }
+
+  await pharmacy.save()
+
+  return pharmacy
+}
 export {
   editPharmacy,
   deletePharmacy,
@@ -330,4 +352,5 @@ export {
   getDashboardStats,
   getSignUpTrend,
   changeStatus,
+  pharmacySettings,
 };
