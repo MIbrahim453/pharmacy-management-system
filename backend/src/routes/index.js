@@ -7,6 +7,7 @@ import medicineRoutes from "../modules/admin/medicines/medicine.routes.js";
 import supplierRoutes from "../modules/admin/suppliers/supplier.routes.js";
 import staffRoutes from "../modules/admin/staffDetails/staff.routes.js";
 import inventoryRoutes from "../modules/admin/inventory/inventory.routes.js";
+import purchaseRoutes from "../modules/admin/purchases/purchase.routes.js";
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use(`${API_PREFIX}/admin-medicines`, medicineRoutes);
 router.use(`${API_PREFIX}/admin-suppliers`, supplierRoutes);
 router.use(`${API_PREFIX}/admin-staff-details`, staffRoutes);
 router.use(`${API_PREFIX}/admin-inventory`, inventoryRoutes);
+router.use(`${API_PREFIX}/admin-purchases`, purchaseRoutes);
 
 export default router;
