@@ -12,6 +12,7 @@ const PAGE_META = {
   '/admin/suppliers':  { title: 'Suppliers',    crumb: 'Admin · Manage' },
   '/admin/staff':      { title: 'Staff',        crumb: 'Admin · Manage' },
   '/admin/inventory':  { title: 'Inventory',    crumb: 'Admin · Operations' },
+  '/admin/purchases':  { title: 'Purchases',    crumb: 'Admin · Operations' },
   '/admin/invoices':   { title: 'Invoices',     crumb: 'Admin · Operations' },
   '/admin/payments':   { title: 'Payments',     crumb: 'Admin · Operations' },
   '/admin/reports':    { title: 'Reports',      crumb: 'Admin · Operations' },

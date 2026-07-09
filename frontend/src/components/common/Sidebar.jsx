@@ -41,6 +41,7 @@ const NAV = {
       section: 'Operations',
       items: [
         { label: 'Inventory', icon: Package, to: '/admin/inventory' },
+        { label: 'Purchases', icon: ShoppingCart, to: '/admin/purchases' },
         { label: 'Invoices', icon: Receipt, to: '/admin/invoices' },
         { label: 'Payments', icon: CreditCard, to: '/admin/payments' },
         { label: 'Reports', icon: LineChart, to: '/admin/reports' },

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Plus, Pill, Eye, Pencil, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
 import PageHeader from '../../../components/common/PageHeader';
 import SearchBar from '../../../components/common/SearchBar';
 import { Card } from '../../../components/ui/Card';
@@ -23,16 +23,15 @@ import {
   getCategoryNames,
 } from '../../../services/medicineService';
 
-const DEFAULT_CATEGORIES = ['All', 'Antibiotics', 'Analgesics', 'Cardiac', 'Gastro', 'Respiratory', 'Pediatric', 'Vitamins'];
+const DEFAULT_CATEGORIES = ['All', 'Antibiotics', 'Analgesics', 'Cardiac', 'Vitamins', 'Injections'];
+const perPage = 8;
 
 export default function Medicines() {
   const [medicines, setMedicines] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-  const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const perPage = 5;
-
   const [modal, setModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [viewModal, setViewModal] = useState(false);
@@ -50,15 +49,12 @@ export default function Medicines() {
     resolver: yupResolver(medicineCreateSchema),
     defaultValues: {
       name: '',
-      brand: '',
+      genericName: '',
       category: 'Antibiotics',
-      expiryDate: '',
-      stockQty: '',
-      reorderLevel: '',
-      tabPrice: '',
-      stripPrice: '',
-      packPrice: '',
-      status: 'inStock',
+      manufacturer: '',
+      saleUnit: '',
+      sellingPrice: '',
+      reorderLevel: '0',
     },
   });
 
@@ -72,15 +68,12 @@ export default function Medicines() {
     resolver: yupResolver(medicineEditSchema),
     defaultValues: {
       name: '',
-      brand: '',
+      genericName: '',
       category: 'Antibiotics',
-      expiryDate: '',
-      stockQty: '',
-      reorderLevel: '',
-      tabPrice: '',
-      stripPrice: '',
-      packPrice: '',
-      status: 'inStock',
+      manufacturer: '',
+      saleUnit: '',
+      sellingPrice: '',
+      reorderLevel: '0',
     },
   });
 
@@ -122,15 +115,12 @@ export default function Medicines() {
   const openAdd = () => {
     resetAdd({
       name: '',
-      brand: '',
+      genericName: '',
       category: categories.filter(c => c !== 'All')[0] || 'Antibiotics',
-      expiryDate: '',
-      stockQty: '',
-      reorderLevel: '',
-      tabPrice: '',
-      stripPrice: '',
-      packPrice: '',
-      status: 'inStock',
+      manufacturer: '',
+      saleUnit: '',
+      sellingPrice: '',
+      reorderLevel: '0',
     });
     setModal(true);
   };
@@ -140,9 +130,9 @@ export default function Medicines() {
     try {
       const newMedicine = await createMedicine(data);
       setMedicines((prev) => [...prev, newMedicine]);
-      toast.success(`${newMedicine.name} added to inventory`);
+      toast.success(`${newMedicine.name} added to medicine catalog`);
       setModal(false);
-      fetchCategories(); // Reload categories in case a new one was added
+      fetchCategories();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add medicine');
     } finally {
@@ -154,15 +144,12 @@ export default function Medicines() {
     setSelected(m);
     resetEdit({
       name: m.name,
-      brand: m.brand,
+      genericName: m.genericName,
       category: m.category,
-      expiryDate: m.expiryDateStr,
-      stockQty: String(m.stock),
+      manufacturer: m.manufacturer,
+      saleUnit: m.saleUnit,
+      sellingPrice: String(m.sellingPrice),
       reorderLevel: String(m.reorder),
-      tabPrice: String(m.pricePerTab),
-      stripPrice: String(m.pricePerStrip),
-      packPrice: String(m.pricePerPack),
-      status: m.status === 'In stock' ? 'inStock' : m.status === 'Low stock' ? 'lowStock' : 'critical',
     });
     setEditModal(true);
   };
@@ -177,7 +164,7 @@ export default function Medicines() {
       toast.success(`${updated.name} updated successfully`);
       setEditModal(false);
       setSelected(null);
-      fetchCategories(); // Reload categories in case category was updated
+      fetchCategories();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update medicine');
     } finally {
@@ -195,7 +182,7 @@ export default function Medicines() {
     try {
       await deleteMedicine(selected.id);
       setMedicines((prev) => prev.filter((m) => m.id !== selected.id));
-      toast.success(`${selected?.name} deleted successfully`);
+      toast.success('Medicine deleted from catalog');
       setDelModal(false);
       setSelected(null);
     } catch (error) {
@@ -217,7 +204,7 @@ export default function Medicines() {
     <>
       <PageHeader
         title="Medicines"
-        subtitle={`${medicines.length} medicines in inventory`}
+        subtitle={`${medicines.length} medicines in product catalog`}
         actions={
           <Button size="sm" icon={<Plus size={15} />} onClick={openAdd}>
             Add medicine
@@ -230,7 +217,7 @@ export default function Medicines() {
           <SearchBar
             value={search}
             onChange={(v) => setSearch(v)}
-            placeholder="Search medicines…"
+            placeholder="Search brand, generic name, or manufacturer…"
             className="w-full sm:flex-1 sm:max-w-xs"
           />
           <div className="flex flex-wrap gap-1.5">
@@ -256,11 +243,12 @@ export default function Medicines() {
         <Table>
           <thead>
             <tr>
-              <Th>Medicine</Th>
+              <Th>Medicine (Brand & Generic)</Th>
               <Th>Category</Th>
-              <Th align="right">Price/Tab</Th>
-              <Th align="right">Price/Strip</Th>
-              <Th align="right">Price/Pack</Th>
+              <Th>Manufacturer</Th>
+              <Th>Sale Unit</Th>
+              <Th align="right">Selling Price</Th>
+              <Th align="right">Stock Qty</Th>
               <Th>Expiry</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
@@ -268,7 +256,7 @@ export default function Medicines() {
           </thead>
           <tbody>
             {paginated.length === 0 ? (
-              <TableEmpty cols={8} message="No medicines found" icon={<Pill size={32} />} />
+              <TableEmpty cols={9} message="No medicines found" icon={<Pill size={32} />} />
             ) : (
               paginated.map((m, i) => (
                 <motion.tr
@@ -279,42 +267,33 @@ export default function Medicines() {
                 >
                   <Td>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary text-[10px] font-bold">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary text-xs font-bold">
                         {m.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-on-surface">{m.name}</div>
-                        <div className="text-xs text-on-surface-variant">{m.brand}</div>
+                        <div className="text-sm font-bold text-on-surface">{m.name}</div>
+                        <div className="text-xs text-on-surface-variant font-medium italic">{m.genericName}</div>
                       </div>
                     </div>
                   </Td>
                   <Td>
                     <Badge variant="default">{m.category}</Badge>
                   </Td>
+                  <Td className="text-sm text-on-surface-variant font-medium">
+                    {m.manufacturer}
+                  </Td>
+                  <Td className="text-sm text-on-surface-variant">
+                    {m.saleUnit}
+                  </Td>
                   <Td align="right" className="text-sm font-semibold text-on-surface tnum">
-                    {formatPKR(m.pricePerTab)}
-                  </Td>
-                  <Td align="right" className="text-sm text-on-surface tnum">
-                    {m.pricePerStrip ? formatPKR(m.pricePerStrip) : '—'}
+                    {formatPKR(m.sellingPrice)}
                   </Td>
                   <Td align="right" className="text-sm font-semibold text-on-surface tnum">
-                    {m.pricePerPack ? formatPKR(m.pricePerPack) : '—'}
+                    {m.stock.toLocaleString()} {m.saleUnit}s
                   </Td>
-                  <Td
-                    className={`text-sm ${
-                      m.exp === 'err'
-                        ? 'text-error font-semibold'
-                        : m.exp === 'warn'
-                        ? 'text-warning'
-                        : 'text-on-surface-variant'
-                    }`}
-                  >
-                    {m.expiry}
-                  </Td>
+                  <Td className="text-sm text-on-surface-variant tnum">{m.expiry || '—'}</Td>
                   <Td>
-                    <Badge variant={statusColor(m.status)} dot>
-                      {m.status}
-                    </Badge>
+                    <Badge status={m.status} dot />
                   </Td>
                   <Td>
                     <div className="flex items-center gap-1">
@@ -348,7 +327,7 @@ export default function Medicines() {
         open={modal}
         onClose={() => setModal(false)}
         title="Add medicine"
-        subtitle="Add a new medicine to your inventory."
+        subtitle="Register a new medicine in the catalog."
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setModal(false)}>
@@ -362,19 +341,25 @@ export default function Medicines() {
       >
         <form id="medicine-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 grid grid-cols-2 gap-4">
           <Input
-            label="Medicine name"
+            label="Name"
             {...registerAdd('name')}
             required
             placeholder="e.g. Augmentin 625mg"
-            containerClass="col-span-2"
             error={addErrors.name?.message}
           />
           <Input
-            label="Brand"
-            {...registerAdd('brand')}
+            label="Generic Name"
+            {...registerAdd('genericName')}
             required
-            placeholder="GSK, Abbott…"
-            error={addErrors.brand?.message}
+            placeholder="e.g. Co-amoxiclav"
+            error={addErrors.genericName?.message}
+          />
+          <Input
+            label="Manufacturer / Brand Owner"
+            {...registerAdd('manufacturer')}
+            required
+            placeholder="e.g. GSK, Abbott"
+            error={addErrors.manufacturer?.message}
           />
           <Select
             label="Category"
@@ -383,53 +368,18 @@ export default function Medicines() {
             error={addErrors.category?.message}
           />
           <Input
-            label="Expiry date"
-            type="date"
-            {...registerAdd('expiryDate')}
+            label="Sale Unit (Smallest Unit)"
+            {...registerAdd('saleUnit')}
             required
-            error={addErrors.expiryDate?.message}
+            placeholder="e.g. tablet, capsule, bottle, vial, tube"
+            error={addErrors.saleUnit?.message}
           />
           <Input
-            label="Stock qty"
-            type="number"
-            {...registerAdd('stockQty')}
-            required
-            min="0"
-            error={addErrors.stockQty?.message}
-          />
-          <Input
-            label="Reorder level"
+            label="Reorder level (units)"
             type="number"
             {...registerAdd('reorderLevel')}
             min="0"
             error={addErrors.reorderLevel?.message}
-          />
-          <Input
-            label="Price per tab (Rs)"
-            type="number"
-            {...registerAdd('tabPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={addErrors.tabPrice?.message}
-          />
-          <Input
-            label="Price per strip (Rs)"
-            type="number"
-            {...registerAdd('stripPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={addErrors.stripPrice?.message}
-          />
-          <Input
-            label="Price per pack (Rs)"
-            type="number"
-            {...registerAdd('packPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={addErrors.packPrice?.message}
           />
         </form>
       </Modal>
@@ -452,19 +402,41 @@ export default function Medicines() {
         }
       >
         <form id="medicine-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 grid grid-cols-2 gap-4">
+          <div className="col-span-2 grid grid-cols-3 gap-3 bg-surface-container/40 p-3 rounded-xl border border-outline-variant/30 text-xs">
+            <div>
+              <span className="text-on-surface-variant block font-medium">Total Stock</span>
+              <span className="font-bold text-sm text-on-surface">{selected?.stock ?? 0} {selected?.saleUnit}s</span>
+            </div>
+            <div>
+              <span className="text-on-surface-variant block font-medium">Nearest Expiry</span>
+              <span className="font-bold text-sm text-on-surface">{selected?.expiry || '—'}</span>
+            </div>
+            <div>
+              <span className="text-on-surface-variant block font-medium">Status</span>
+              <span className="block mt-0.5"><Badge status={selected?.status} dot>{selected?.status}</Badge></span>
+            </div>
+          </div>
+
           <Input
-            label="Medicine name"
+            label="Name"
             {...registerEdit('name')}
             required
-            containerClass="col-span-2"
             disabled
             error={editErrors.name?.message}
           />
           <Input
-            label="Brand"
-            {...registerEdit('brand')}
+            label="Generic Name"
+            {...registerEdit('genericName')}
             required
-            error={editErrors.brand?.message}
+            placeholder="e.g. Co-amoxiclav"
+            error={editErrors.genericName?.message}
+          />
+          <Input
+            label="Manufacturer"
+            {...registerEdit('manufacturer')}
+            required
+            placeholder="e.g. GSK, Abbott"
+            error={editErrors.manufacturer?.message}
           />
           <Select
             label="Category"
@@ -473,60 +445,26 @@ export default function Medicines() {
             error={editErrors.category?.message}
           />
           <Input
-            label="Expiry date"
-            type="date"
-            {...registerEdit('expiryDate')}
+            label="Sale Unit (Smallest Unit)"
+            {...registerEdit('saleUnit')}
             required
-            error={editErrors.expiryDate?.message}
+            placeholder="e.g. tablet, capsule, bottle"
+            error={editErrors.saleUnit?.message}
           />
           <Input
-            label="Stock qty"
+            label="Selling Price per Sale Unit (Rs) - Synced from Batches"
             type="number"
-            {...registerEdit('stockQty')}
-            required
-            min="0"
-            error={editErrors.stockQty?.message}
+            {...registerEdit('sellingPrice')}
+            disabled
+            error={editErrors.sellingPrice?.message}
           />
           <Input
-            label="Reorder level"
+            label="Reorder level (units)"
             type="number"
             {...registerEdit('reorderLevel')}
             min="0"
             error={editErrors.reorderLevel?.message}
           />
-          <Input
-            label="Price per tab (Rs)"
-            type="number"
-            {...registerEdit('tabPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={editErrors.tabPrice?.message}
-          />
-          <Input
-            label="Price per strip (Rs)"
-            type="number"
-            {...registerEdit('stripPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={editErrors.stripPrice?.message}
-          />
-          <Input
-            label="Price per pack (Rs)"
-            type="number"
-            {...registerEdit('packPrice')}
-            required
-            min="0"
-            step="0.01"
-            error={editErrors.packPrice?.message}
-          />
-          <div className="flex flex-col gap-1.5 justify-center">
-            <span className="text-xs font-semibold text-on-surface-variant">Status (Auto-calculated)</span>
-            <div className="mt-1">
-              <Badge status={selected?.status} dot>{selected?.status}</Badge>
-            </div>
-          </div>
         </form>
       </Modal>
 
@@ -539,8 +477,8 @@ export default function Medicines() {
                 {selected?.name?.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <div className="text-lg font-semibold text-on-surface">{selected?.name}</div>
-                <div className="text-sm text-on-surface-variant">{selected?.brand}</div>
+                <div className="text-lg font-bold text-on-surface">{selected?.name}</div>
+                <div className="text-sm text-on-surface-variant font-medium italic">{selected?.genericName}</div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -549,24 +487,24 @@ export default function Medicines() {
                 <div className="font-medium text-on-surface mt-0.5">{selected?.category}</div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Stock</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.stock?.toLocaleString()}</div>
+                <div className="text-on-surface-variant text-xs">Manufacturer</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.manufacturer}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Sale Unit</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.saleUnit}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Selling Price</div>
+                <div className="font-medium text-on-surface mt-0.5">{formatPKR(selected?.sellingPrice)} / {selected?.saleUnit}</div>
+              </div>
+              <div className="rounded-xl bg-surface-container p-3">
+                <div className="text-on-surface-variant text-xs">Stock Level</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.stock?.toLocaleString()} {selected?.saleUnit}s</div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
                 <div className="text-on-surface-variant text-xs">Reorder level</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.reorder}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Price per tab</div>
-                <div className="font-medium text-on-surface mt-0.5">{formatPKR(selected?.pricePerTab)}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Price per strip</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.pricePerStrip ? formatPKR(selected?.pricePerStrip) : '—'}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Price per pack</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.pricePerPack ? formatPKR(selected?.pricePerPack) : '—'}</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.reorder} {selected?.saleUnit}s</div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
                 <div className="text-on-surface-variant text-xs">Expiry</div>

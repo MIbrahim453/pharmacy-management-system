@@ -30,6 +30,7 @@ import Medicines from './features/admin/pages/Medicines';
 import Suppliers from './features/admin/pages/Suppliers';
 import Staff from './features/admin/pages/Staff';
 import Inventory from './features/admin/pages/Inventory';
+import Purchases from './features/admin/pages/Purchases';
 import Invoices from './features/admin/pages/Invoices';
 import Payments from './features/admin/pages/Payments';
 import Reports from './features/admin/pages/Reports';
@@ -67,6 +68,7 @@ function App() {
       <Route path="/admin/suppliers" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Suppliers /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Staff /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/inventory" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/purchases" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Purchases /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Invoices /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Payments /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
