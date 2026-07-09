@@ -18,19 +18,19 @@ export const mapBackendToFrontend = (m) => {
   return {
     id: m._id,
     name: m.name,
-    brand: m.brand,
+    genericName: m.genericName || "",
     category: m.category?.name || m.category || "",
-    stock: m.stockQty,
+    manufacturer: m.manufacturer || "",
+    saleUnit: m.saleUnit || "",
+    sellingPrice: m.sellingPrice || 0,
+    stock: m.stockQty || 0,
     reorder: m.reorderLevel || 0,
-    pricePerTab: m.tabPrice,
-    pricePerStrip: m.stripPrice,
-    pricePerPack: m.packPrice,
     expiry: m.expiryDate
       ? new Date(m.expiryDate).toLocaleDateString("en-US", {
           month: "short",
           year: "numeric",
         })
-      : "",
+      : "—",
     expiryDateStr: m.expiryDate
       ? new Date(m.expiryDate).toISOString().split("T")[0]
       : "",
@@ -41,7 +41,7 @@ export const mapBackendToFrontend = (m) => {
         ? "Low stock"
         : m.status === "critical"
         ? "Critical"
-        : m.status || "In stock",
+        : m.status || "Critical",
     exp: getExpiryStatus(m.expiryDate),
   };
 };
@@ -50,14 +50,12 @@ export const mapBackendToFrontend = (m) => {
 export const mapFrontendToBackend = (data) => {
   return {
     name: data.name,
-    brand: data.brand,
+    genericName: data.genericName,
     category: data.category,
-    expiryDate: data.expiryDate,
-    stockQty: Number(data.stockQty),
-    reorderLevel: data.reorderLevel ? Number(data.reorderLevel) : undefined,
-    tabPrice: Number(data.tabPrice),
-    stripPrice: Number(data.stripPrice),
-    packPrice: Number(data.packPrice),
+    manufacturer: data.manufacturer,
+    saleUnit: data.saleUnit,
+    sellingPrice: data.sellingPrice ? Number(data.sellingPrice) : 0,
+    reorderLevel: data.reorderLevel ? Number(data.reorderLevel) : 0,
   };
 };
 
@@ -65,7 +63,7 @@ export const getAllMedicines = async (searchTerm = "") => {
   const response = await api.get("/admin-medicines/all-medicines", {
     params: {
       searchTerm,
-      limit: 1000, // Fetch all for local client-side category filtering and pagination
+      limit: 1000,
     },
   });
   const data = response.data?.data || [];
@@ -97,11 +95,4 @@ export const viewMedicine = async (id) => {
 export const getCategoryNames = async () => {
   const response = await api.get("/admin-medicines/category-names");
   return response.data?.data || [];
-};
-
-export const updateMedicineStock = async (id, stockQty) => {
-  const response = await api.put(`/admin-medicines/edit-medicine/${id}`, {
-    stockQty: Number(stockQty),
-  });
-  return mapBackendToFrontend(response.data?.data);
 };
