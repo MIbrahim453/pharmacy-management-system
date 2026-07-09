@@ -5,42 +5,51 @@ const medicineSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
-    brand: {
+    genericName: {
       type: String,
       required: true,
+      trim: true,
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
-    expiryDate: {
-      type: Date,
+    manufacturer: {
+      type: String,
       required: true,
+      trim: true,
+    },
+    saleUnit: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    sellingPrice: {
+      type: Number,
+      default:0,
+      min: 0,
     },
     stockQty: {
       type: Number,
-      required: true,
+      default: 0,
+      min: 0,
     },
     reorderLevel: {
       type: Number,
+      default: 0,
+      min: 0,
     },
-    tabPrice: {
-      type: Number,
-      required: true,
-    },
-    stripPrice: {
-      type: Number,
-      required: true,
-    },
-    packPrice: {
-      type: Number,
-      required: true,
+    expiryDate: {
+      type: Date,
+      default: null,
     },
     status: {
       type: String,
       enum: ["inStock", "lowStock", "critical"],
+      default: "critical",
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,7 +57,7 @@ const medicineSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 const Medicine = mongoose.model("Medicine", medicineSchema);

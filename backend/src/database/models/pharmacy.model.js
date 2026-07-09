@@ -37,11 +37,15 @@ const pharmacySchema = new mongoose.Schema(
     },
     lowStockThreshold: {
       type: Number,
-      default: 20
+      default: 20,
     },
     criticalStockThreshold: {
       type: Number,
-      default: 5
+      default: 5,
+    },
+    discount: {
+      type: Number,
+      default: 0,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
