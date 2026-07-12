@@ -2,9 +2,14 @@ import mongoose from "mongoose";
 
 const pharmacySchema = new mongoose.Schema(
   {
-    pharmacy_name: {
+    pharmacyName: {
       type: String,
       required: true,
+      alias: "pharmacy_name",
+    },
+    pharmacyEmail : {
+      type: String,
+      default: "",
     },
     phone: {
       type: String,
@@ -23,11 +28,9 @@ const pharmacySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    maxStaff: {
+    totalStaff: {
       type: Number,
-      min: 2,
-      max: 20,
-      default: 10,
+      default: 0,
     },
     status: {
       type: String,
@@ -58,7 +61,11 @@ const pharmacySchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
 
 const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);

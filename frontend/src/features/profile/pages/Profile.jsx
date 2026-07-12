@@ -10,7 +10,7 @@ import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import api from '../../../services/axios';
 import { updateProfile } from '../../../store/authSlice';
-import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema } from '../../../utils/validation';
+import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema, pharmacyDetailsSchema } from '../../../utils/validation';
 
 function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -23,6 +23,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [pharmacySaving, setPharmacySaving] = useState(false);
+  const [detailsSaving, setDetailsSaving] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
   const [pharmacy, setPharmacy] = useState(null);
 
@@ -59,6 +60,17 @@ export default function Profile() {
     defaultValues: { discount: '0', lowStockThreshold: '20', criticalStockThreshold: '10' },
   });
 
+  // Pharmacy Details Form configuration
+  const {
+    register: registerDetails,
+    handleSubmit: handleSubmitDetails,
+    reset: resetDetails,
+    formState: { errors: detailsErrors },
+  } = useForm({
+    resolver: yupResolver(pharmacyDetailsSchema),
+    defaultValues: { pharmacyEmail: '', phone: '', address: '' },
+  });
+
   // Sync state from redux on load
   useEffect(() => {
     if (reduxUser) {
@@ -80,13 +92,18 @@ export default function Profile() {
             lowStockThreshold: String(userData.pharmacyId.lowStockThreshold ?? 20),
             criticalStockThreshold: String(userData.pharmacyId.criticalStockThreshold ?? 10),
           });
+          resetDetails({
+            pharmacyEmail: userData.pharmacyId.pharmacyEmail ?? '',
+            phone: userData.pharmacyId.phone ?? '',
+            address: userData.pharmacyId.address ?? '',
+          });
         }
       } catch (error) {
         console.error('Failed to fetch latest user info:', error);
       }
     };
     fetchFreshUser();
-  }, [resetProfile, resetSettings]);
+  }, [resetProfile, resetSettings, resetDetails]);
 
   const saveProfile = async (data) => {
     setSaving(true);
@@ -128,12 +145,7 @@ export default function Profile() {
   const savePharmacySettings = async (data) => {
     setPharmacySaving(true);
     try {
-      const pId = pharmacy?._id || reduxUser?.pharmacyId;
-      if (!pId) {
-        toast.error('Pharmacy ID not found');
-        return;
-      }
-      const response = await api.put(`/super-admin-pharmacies/settings/${pId}`, {
+      const response = await api.put('/admin-profile/pharmacy-settings', {
         discount: Number(data.discount),
         lowStockThreshold: Number(data.lowStockThreshold),
         criticalStockThreshold: Number(data.criticalStockThreshold),
@@ -144,6 +156,23 @@ export default function Profile() {
       toast.error(error.response?.data?.message || 'Failed to update pharmacy settings');
     } finally {
       setPharmacySaving(false);
+    }
+  };
+
+  const savePharmacyDetails = async (data) => {
+    setDetailsSaving(true);
+    try {
+      const response = await api.put('/admin-profile/pharmacy-detail', {
+        pharmacyEmail: data.pharmacyEmail,
+        phone: data.phone,
+        address: data.address,
+      });
+      toast.success('Pharmacy details updated successfully');
+      setPharmacy(response.data?.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update pharmacy details');
+    } finally {
+      setDetailsSaving(false);
     }
   };
 
@@ -159,6 +188,7 @@ export default function Profile() {
   // Only add Pharmacy if user is NOT super admin
   if (reduxUser?.role !== 'super') {
     profileDetails.push(['Pharmacy', pharmacy?.pharmacy_name || reduxUser?.pharmacyName || 'N/A']);
+    profileDetails.push(['Total Staff', pharmacy?.totalStaff ?? 0]);
   }
   profileDetails.push(['Role', formatRole(reduxUser?.role)]);
   profileDetails.push(['Status', 'Active']);
@@ -220,6 +250,41 @@ export default function Profile() {
               </form>
             </CardBody>
           </Card>
+
+          {/* Pharmacy Details Form (Only visible to admin) */}
+          {reduxUser?.role === 'admin' && (
+            <Card>
+              <CardHeader><CardTitle>Pharmacy Details</CardTitle></CardHeader>
+              <CardBody>
+                <form onSubmit={handleSubmitDetails(savePharmacyDetails)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Pharmacy Email"
+                      type="email"
+                      {...registerDetails('pharmacyEmail')}
+                      prefix={<Mail size={16} />}
+                      error={detailsErrors.pharmacyEmail?.message}
+                    />
+                    <Input
+                      label="Pharmacy Phone"
+                      type="text"
+                      {...registerDetails('phone')}
+                      error={detailsErrors.phone?.message}
+                    />
+                  </div>
+                  <Input
+                    label="Pharmacy Address"
+                    type="text"
+                    {...registerDetails('address')}
+                    error={detailsErrors.address?.message}
+                  />
+                  <div className="flex justify-end">
+                    <Button type="submit" size="sm" loading={detailsSaving} icon={<Save size={15} />}>Save details</Button>
+                  </div>
+                </form>
+              </CardBody>
+            </Card>
+          )}
 
           {/* Pharmacy Settings Form (Only visible to admin) */}
           {reduxUser?.role === 'admin' && (

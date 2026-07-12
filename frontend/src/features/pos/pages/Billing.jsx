@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ShoppingCart, Wallet, Clock, Plus, Minus, Trash2,
+  Search, ShoppingCart, Wallet, Plus, Minus, Trash2,
   CreditCard, Banknote, Timer, CheckCircle,
 } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
@@ -10,24 +10,7 @@ import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
-
-// Inline catalog data
-const CATALOG = [
-  { name: 'Augmentin 625mg', brand: 'GSK', category: 'Antibiotics', price: 92.0, stock: 842 },
-  { name: 'Panadol Extra', brand: 'GSK', category: 'Analgesics', price: 12.5, stock: 148 },
-  { name: 'Concor 5mg', brand: 'Merck', category: 'Cardiac', price: 34.0, stock: 612 },
-  { name: 'Brufen 400mg', brand: 'Abbott', category: 'Analgesics', price: 8.2, stock: 36 },
-  { name: 'Neurobion Forte', brand: 'Merck', category: 'Vitamins', price: 62.0, stock: 421 },
-  { name: 'Risek 20mg', brand: 'Getz', category: 'Gastro', price: 18.4, stock: 0 },
-  { name: 'Calpol Syrup', brand: 'GSK', category: 'Pediatric', price: 95.0, stock: 268 },
-  { name: 'Lipiget 10mg', brand: 'Getz', category: 'Cardiac', price: 28.0, stock: 530 },
-  { name: 'Ventolin Inhaler', brand: 'GSK', category: 'Respiratory', price: 420.0, stock: 94 },
-  { name: 'Disprol Tab', brand: 'Reckitt', category: 'Analgesics', price: 9.0, stock: 310 },
-  { name: 'Flagyl 400mg', brand: 'Sanofi', category: 'Antibiotics', price: 16.0, stock: 188 },
-  { name: 'Surbex Z', brand: 'Abbott', category: 'Vitamins', price: 240.0, stock: 76 },
-];
-
-const POS_CATS = ['All', 'Antibiotics', 'Analgesics', 'Cardiac', 'Vitamins', 'Gastro', 'Respiratory', 'Pediatric'];
+import { getPosMedicines, getPosCategories } from '../../../services/posService';
 
 const abbr = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const formatPKR = (n) => 'Rs ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -43,6 +26,9 @@ const generateInvoiceNumber = () => {
 const METHOD_ICONS = { Cash: <Banknote size={15} />, Card: <CreditCard size={15} />, Later: <Timer size={15} /> };
 
 export default function Billing() {
+  const [medicines, setMedicines] = useState([]);
+  const [categories, setCategories] = useState(['All']);
+  const [loading, setLoading] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [payMethod, setPayMethod] = useState('Cash');
   const [query, setQuery] = useState('');
@@ -57,10 +43,47 @@ export default function Billing() {
   const [days, setDays] = useState('1');
   const [customQty, setCustomQty] = useState('1');
 
-  const list = CATALOG.filter((m) =>
-    (cat === 'All' || m.category === cat) &&
-    (m.name.toLowerCase().includes(query.toLowerCase()) || m.brand.toLowerCase().includes(query.toLowerCase())),
-  );
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const cats = await getPosCategories();
+        setCategories(['All', ...cats]);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch medicines when query or category changes
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      setLoading(true);
+      try {
+        const list = await getPosMedicines(query, cat);
+        setMedicines(list.map((m) => ({
+          id: m._id,
+          name: m.name,
+          brand: m.manufacturer,
+          category: m.category?.name || 'Uncategorized',
+          price: m.sellingPrice || 0,
+          stock: m.stockQty || 0,
+          saleUnit: m.saleUnit || '',
+          genericName: m.genericName || '',
+          expiryDate: m.expiryDate,
+        })));
+      } catch (error) {
+        console.error('Failed to fetch medicines:', error);
+        toast.error('Failed to load medicines from server');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMedicines();
+  }, [query, cat]);
+
+  const list = medicines;
 
   const entries = Object.values(cartItems);
   const DISCOUNT_RATE = 0.05;
@@ -86,7 +109,7 @@ export default function Billing() {
     const name = qtyMed?.name;
     if (!name) return;
     if (!newItems[name]) {
-      newItems[name] = { name, price: qtyMed?.price || 0, qty: 0 };
+      newItems[name] = { id: qtyMed.id, name, price: qtyMed?.price || 0, qty: 0 };
     }
     newItems[name].qty += computedQty;
     setCartItems(newItems);
@@ -143,7 +166,7 @@ export default function Billing() {
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {POS_CATS.map((c) => (
+            {categories.map((c) => (
               <button
                 key={c}
                 onClick={() => setCat(c)}
@@ -160,44 +183,57 @@ export default function Billing() {
 
         {/* Product grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-4">
-          {list.length === 0 && (
+          {loading ? (
+            Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="card-surface p-4 animate-pulse space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="h-9 w-9 bg-surface-container-high rounded-xl" />
+                  <div className="h-5 w-16 bg-surface-container-high rounded-full" />
+                </div>
+                <div className="h-4 w-3/4 bg-surface-container-high rounded" />
+                <div className="h-3 w-1/2 bg-surface-container-high rounded" />
+                <div className="h-4 w-1/3 bg-surface-container-high rounded mt-2" />
+              </div>
+            ))
+          ) : list.length === 0 ? (
             <div className="col-span-4 py-12 text-center text-sm text-on-surface-variant/70">
               No medicines match your search.
             </div>
-          )}
-          {list.map((m) => {
-            const out = m.stock === 0;
-            const inCart = cartItems[m.name]?.qty || 0;
-            return (
-              <motion.button
-                key={m.name}
-                disabled={out}
-                onClick={() => openQtyModal(m)}
-                className={`group relative card-surface p-4 text-left transition-all duration-150 ${out
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:shadow-lg hover:border-primary/40 active:scale-[0.98]'
-                  }`}
-              >
-                {inCart > 0 && (
-                  <span className="absolute top-2.5 right-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-on-primary">
-                    {inCart}
-                  </span>
-                )}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-xs font-bold">
-                    {abbr(m.name)}
+          ) : (
+            list.map((m) => {
+              const out = m.stock === 0;
+              const inCart = cartItems[m.name]?.qty || 0;
+              return (
+                <motion.button
+                  key={m.name}
+                  disabled={out}
+                  onClick={() => openQtyModal(m)}
+                  className={`group relative card-surface p-4 text-left transition-all duration-150 ${out
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:shadow-lg hover:border-primary/40 active:scale-[0.98]'
+                    }`}
+                >
+                  {inCart > 0 && (
+                    <span className="absolute top-2.5 right-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-on-primary">
+                      {inCart}
+                    </span>
+                  )}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-xs font-bold">
+                      {abbr(m.name)}
+                    </div>
+                    <Badge status={out ? 'Expired' : m.stock < 60 ? 'Low stock' : 'In stock'} />
                   </div>
-                  <Badge status={out ? 'Expired' : m.stock < 60 ? 'Low stock' : 'In stock'} />
-                </div>
-                <div className="text-sm font-semibold text-on-surface leading-tight">{m.name}</div>
-                <div className="text-xs text-on-surface-variant mt-0.5">{m.brand} · {m.category}</div>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm font-bold text-on-surface">{formatPKR(m.price)}<span className="text-[10px] font-normal text-on-surface-variant">/tab</span></span>
-                  {!out && <Plus size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
-                </div>
-              </motion.button>
-            );
-          })}
+                  <div className="text-sm font-semibold text-on-surface leading-tight">{m.name}</div>
+                  <div className="text-xs text-on-surface-variant mt-0.5">{m.brand} · {m.category}</div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm font-bold text-on-surface">{formatPKR(m.price)}<span className="text-[10px] font-normal text-on-surface-variant">/tab</span></span>
+                    {!out && <Plus size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  </div>
+                </motion.button>
+              );
+            })
+          )}
         </div>
       </div>
 

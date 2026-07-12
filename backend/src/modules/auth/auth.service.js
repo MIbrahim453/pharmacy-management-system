@@ -47,7 +47,7 @@ const createAdmin = async (user, data) => {
   });
 
   const pharmacy = await Pharmacy.create({
-    pharmacy_name: pharmacyName,
+    pharmacyName: pharmacyName,
     city,
     registrationNumber,
     owner: admin._id,

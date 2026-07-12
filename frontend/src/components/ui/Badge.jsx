@@ -24,6 +24,8 @@ const statusToVariant = {
   success: 'success',
   Failed: 'danger',
   failed: 'danger',
+  Suspended: 'danger',
+  suspended: 'danger',
 };
 
 export default function Badge({ variant = 'default', status, dot, className, children }) {

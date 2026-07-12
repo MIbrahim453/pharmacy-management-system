@@ -72,7 +72,7 @@ export default function Sidebar({ open, onClose, onToggleExpand, role = 'admin',
 
   useEffect(() => {
     if (role === 'super') {
-      api.get('/super-admin-pharmacies/dashboard-stats')
+      api.get('/super-admin-dashboard/dashboard-stats')
         .then((res) => {
           setTotalPharmacies(res.data.data.totalPharmacies);
         })

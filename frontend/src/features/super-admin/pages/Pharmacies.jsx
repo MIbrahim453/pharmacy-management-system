@@ -48,7 +48,7 @@ export default function PharmaciesPage() {
     formState: { errors: editErrors },
   } = useForm({
     resolver: yupResolver(editPharmacySchema),
-    defaultValues: { pharmacy_name: '', city: '', registrationNumber: '', maxStaff: 10, status: 'inactive' },
+    defaultValues: { pharmacy_name: '', city: '', registrationNumber: '', totalStaff: 0, status: 'inactive' },
   });
 
   // Fetch pharmacies from API
@@ -154,7 +154,7 @@ export default function PharmaciesPage() {
       pharmacy_name: p.pharmacy_name,
       city: p.city,
       registrationNumber: p.registrationNumber || '',
-      maxStaff: p.maxStaff || 10,
+      totalStaff: p.totalStaff || 0,
       status: p.status || 'inactive',
     });
     setEditModal(true);
@@ -191,8 +191,10 @@ export default function PharmaciesPage() {
           <div className="flex items-center gap-2 text-xs text-on-surface-variant sm:ml-auto flex-wrap">
             <span className="h-2 w-2 rounded-full bg-primary" />Active:{' '}
             {list.filter((p) => p.status === 'active').length}
-            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Inactive:{' '}
+            <span className="ml-2 h-2 w-2 rounded-full bg-outline-variant" />Inactive:{' '}
             {list.filter((p) => p.status === 'inactive').length}
+            <span className="ml-2 h-2 w-2 rounded-full bg-error" />Suspended:{' '}
+            {list.filter((p) => p.status === 'suspended').length}
           </div>
         </div>
 
@@ -202,7 +204,7 @@ export default function PharmaciesPage() {
               <Th>Pharmacy</Th>
               <Th>Admin</Th>
               <Th>City</Th>
-              <Th align="right">Max Staff</Th>
+              <Th align="right">Total Staff</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
             </tr>
@@ -229,10 +231,10 @@ export default function PharmaciesPage() {
                   <Td className="text-sm">{p.owner?.name || 'N/A'}</Td>
                   <Td className="text-sm">{p.city}</Td>
                   <Td align="right" className="text-sm font-medium">
-                    {p.maxStaff}
+                    {p.totalStaff}
                   </Td>
                   <Td>
-                    <Badge status={p.status === 'active' ? 'Active' : 'Suspended'} dot />
+                    <Badge status={p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : ''} dot />
                   </Td>
                   <Td>
                     <div className="flex items-center gap-1">
@@ -364,12 +366,11 @@ export default function PharmaciesPage() {
             error={editErrors.registrationNumber?.message}
           />
           <Input
-            label="Max staff count"
+            label="Total staff count"
             type="number"
-            {...registerEdit('maxStaff')}
-            min="2"
-            max="20"
-            error={editErrors.maxStaff?.message}
+            {...registerEdit('totalStaff')}
+            min="0"
+            error={editErrors.totalStaff?.message}
           />
           <Select
             label="Status"
@@ -414,8 +415,8 @@ export default function PharmaciesPage() {
                 </div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Max Staff Capacity</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.maxStaff}</div>
+                <div className="text-on-surface-variant text-xs">Total Staff Count</div>
+                <div className="font-medium text-on-surface mt-0.5">{selected?.totalStaff}</div>
               </div>
               <div className="rounded-xl bg-surface-container p-3">
                 <div className="text-on-surface-variant text-xs">Registration Number</div>
@@ -424,9 +425,7 @@ export default function PharmaciesPage() {
               <div className="rounded-xl bg-surface-container p-3 col-span-1 sm:col-span-2">
                 <div className="text-on-surface-variant text-xs">Platform Status</div>
                 <div className="mt-1">
-                  <Badge status={selected?.status === 'active' ? 'Active' : 'Suspended'} dot>
-                    {selected?.status === 'active' ? 'Active' : 'Suspended'}
-                  </Badge>
+                  <Badge status={selected?.status ? selected.status.charAt(0).toUpperCase() + selected.status.slice(1) : ''} dot />
                 </div>
               </div>
             </div>

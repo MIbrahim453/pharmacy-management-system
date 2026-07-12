@@ -7,7 +7,7 @@ const createPharmacyValidation = joi.object({
   address: joi.string().required(),
   registrationNumber: joi.string().required(),
   city: joi.string().required(),
-  maxStaff: joi.number().min(2).max(20).default(10),
+  totalStaff: joi.number().min(0).default(0),
   status: joi.string().valid("active", "inactive").default("inactive"),
   owner: joi.string(),
   createdBy: joi.string(),
@@ -20,20 +20,12 @@ const editPharmacyValidation = joi.object({
   address: joi.string(),
   registrationNumber: joi.string(),
   city: joi.string(),
-  maxStaff: joi.number().min(2).max(20),
+  totalStaff: joi.number().min(0),
   status: joi.string().valid("active", "inactive"),
 });
 
-const pharmacySettingsValidation = joi
-  .object({
-    discount: joi.number().min(0).max(100).optional(),
-    lowStockThreshold: joi.number().min(0).optional(),
-    criticalStockThreshold: joi.number().min(0).optional(),
-  })
-  .min(1);
 
 export {
   createPharmacyValidation,
   editPharmacyValidation,
-  pharmacySettingsValidation,
 };

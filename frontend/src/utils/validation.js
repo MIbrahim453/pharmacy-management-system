@@ -73,16 +73,17 @@ export const onboardPharmacySchema = yup.object().shape({
 
 // Schema for Editing a Pharmacy
 export const editPharmacySchema = yup.object().shape({
-  pharmacy_name: yup.string().required("Pharmacy name is required"),
+  pharmacyName: yup.string().required("Pharmacy name is required"),
   city: yup.string().required("City is required"),
   registrationNumber: yup.string().required("Registration number is required"),
-  maxStaff: yup
+  totalStaff: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
-    .typeError("Max staff must be a number")
-    .min(2, "Max staff must be at least 2")
-    .max(20, "Max staff cannot exceed 20")
-    .required("Max staff count is required"),
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
+    .typeError("Total staff must be a number")
+    .min(0, "Total staff cannot be negative")
+    .required("Total staff count is required"),
   status: yup
     .string()
     .oneOf(["active", "inactive"], "Status must be active or inactive")
@@ -108,7 +109,7 @@ export const yupResolver = (schema) => async (data) => {
             message: currentError.message,
           },
         }),
-        {}
+        {},
       ),
     };
   }
@@ -141,7 +142,9 @@ export const medicineCreateSchema = yup.object().shape({
     .required("Sale unit is required"),
   reorderLevel: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
     .typeError("Reorder level must be a number")
     .integer("Reorder level must be an integer")
     .min(0, "Reorder level cannot be negative")
@@ -200,32 +203,47 @@ export const staffEditSchema = staffRegisterSchema;
 export const purchaseCreateSchema = yup.object().shape({
   supplierId: yup.string().required("Supplier is required"),
   invoiceNumber: yup.string().optional(),
-  purchaseDate: yup.date().typeError("Please enter a valid purchase date").required("Purchase date is required"),
+  purchaseDate: yup
+    .date()
+    .typeError("Please enter a valid purchase date")
+    .required("Purchase date is required"),
   notes: yup.string().optional(),
   items: yup
     .array()
     .of(
       yup.object().shape({
         medicineId: yup.string().required("Medicine is required"),
-        batchNumber: yup.string().min(1, "Batch number is required").required("Batch number is required"),
-        expiryDate: yup.date().typeError("Please enter a valid expiry date").required("Expiry date is required"),
+        batchNumber: yup
+          .string()
+          .min(1, "Batch number is required")
+          .required("Batch number is required"),
+        expiryDate: yup
+          .date()
+          .typeError("Please enter a valid expiry date")
+          .required("Expiry date is required"),
         purchaseUnit: yup.string().required("Purchase unit is required"),
         purchaseQty: yup
           .number()
-          .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+          .transform((value, originalValue) =>
+            originalValue === "" ? undefined : value,
+          )
           .typeError("Purchase qty must be a number")
           .integer("Purchase qty must be an integer")
           .min(1, "Purchase qty must be at least 1")
           .required("Purchase qty is required"),
         costPrice: yup
           .number()
-          .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+          .transform((value, originalValue) =>
+            originalValue === "" ? undefined : value,
+          )
           .typeError("Cost price must be a number")
           .min(0, "Cost price cannot be negative")
           .required("Cost price is required"),
         sellingPrice: yup
           .number()
-          .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+          .transform((value, originalValue) =>
+            originalValue === "" ? undefined : value,
+          )
           .typeError("Selling price must be a number")
           .min(0, "Selling price cannot be negative")
           .required("Selling price is required"),
@@ -238,16 +256,18 @@ export const purchaseCreateSchema = yup.object().shape({
               to: yup.string().required("Conversion target unit is required"),
               factor: yup
                 .number()
-                .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+                .transform((value, originalValue) =>
+                  originalValue === "" ? undefined : value,
+                )
                 .typeError("Conversion factor must be a number")
                 .integer("Conversion factor must be an integer")
                 .min(1, "Conversion factor must be at least 1")
                 .required("Conversion factor is required"),
-            })
+            }),
           )
           .optional()
           .default([]),
-      })
+      }),
     )
     .min(1, "At least one item is required")
     .required(),
@@ -255,22 +275,31 @@ export const purchaseCreateSchema = yup.object().shape({
 
 export const batchEditSchema = yup.object().shape({
   batchNumber: yup.string().required("Batch number is required"),
-  expiryDate: yup.date().typeError("Please enter a valid expiry date").required("Expiry date is required"),
+  expiryDate: yup
+    .date()
+    .typeError("Please enter a valid expiry date")
+    .required("Expiry date is required"),
   costPrice: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
     .typeError("Cost price must be a number")
     .min(0, "Cost price cannot be negative")
     .required("Cost price is required"),
   sellingPrice: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
     .typeError("Selling price must be a number")
     .min(0, "Selling price cannot be negative")
     .required("Selling price is required"),
   currentQty: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
     .typeError("Current quantity must be a number")
     .integer("Current quantity must be an integer")
     .min(0, "Current quantity cannot be negative")
@@ -281,25 +310,51 @@ export const batchEditSchema = yup.object().shape({
 export const pharmacySettingsSchema = yup.object().shape({
   discount: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
     .typeError("Discount must be a number")
     .min(0, "Discount cannot be negative")
     .max(100, "Discount cannot exceed 100%")
     .required("Discount is required"),
   lowStockThreshold: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
     .typeError("Low stock threshold must be a number")
     .integer("Low stock threshold must be an integer")
     .min(0, "Low stock threshold cannot be negative")
     .required("Low stock threshold is required"),
   criticalStockThreshold: yup
     .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+    .transform((value, originalValue) =>
+      originalValue === "" || originalValue === null ? undefined : value,
+    )
     .typeError("Critical stock threshold must be a number")
     .integer("Critical stock threshold must be an integer")
     .min(0, "Critical stock threshold cannot be negative")
     .required("Critical stock threshold is required"),
+});
+
+export const pharmacyDetailsSchema = yup.object().shape({
+  pharmacyEmail: yup
+    .string()
+    .email("Please enter a valid email address")
+    .optional()
+    .default(""),
+  phone: yup
+    .string()
+    .min(6, "Phone must be at least 6 characters")
+    .max(20, "Phone cannot exceed 20 characters")
+    .optional()
+    .default(""),
+  address: yup
+    .string()
+    .min(2, "Address must be at least 2 characters")
+    .max(255, "Address cannot exceed 255 characters")
+    .optional()
+    .default(""),
 });
 
 export default yupResolver;

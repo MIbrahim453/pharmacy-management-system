@@ -65,9 +65,9 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get('/super-admin-pharmacies/dashboard-stats');
+        const res = await api.get('/super-admin-dashboard/dashboard-stats');
         setStats(res.data.data);
-      } catch (err) {
+      } catch {
         toast.error('Failed to load dashboard stats');
       }
     };
@@ -80,7 +80,7 @@ export default function SuperAdminDashboard() {
       setChartLoading(true);
       try {
         const res = await api.get(
-          `/super-admin-pharmacies/sign-up-trends/${signupFilter.toLowerCase()}`,
+          `/super-admin-dashboard/sign-up-trends/${signupFilter.toLowerCase()}`,
         );
         const data = res.data.data || [];
         // Map backend { label, signUp } → chart-friendly { label, signups }
@@ -89,7 +89,7 @@ export default function SuperAdminDashboard() {
           signups: item.signUp || 0,
         }));
         setTrendData(mapped);
-      } catch (err) {
+      } catch {
         toast.error('Failed to load sign-up trends');
       } finally {
         setChartLoading(false);
@@ -262,7 +262,7 @@ export default function SuperAdminDashboard() {
               <Th>Pharmacy</Th>
               <Th>Admin</Th>
               <Th>City</Th>
-              <Th align="right">Max Staff</Th>
+              <Th align="right">Total Staff</Th>
               <Th>Status</Th>
             </tr>
           </thead>
@@ -286,10 +286,10 @@ export default function SuperAdminDashboard() {
                   </Td>
                   <Td>{p.owner?.name || 'N/A'}</Td>
                   <Td>{p.city}</Td>
-                  <Td align="right">{p.maxStaff}</Td>
+                  <Td align="right">{p.totalStaff}</Td>
                   <Td>
                     <Badge
-                      status={p.status === 'active' ? 'Active' : 'Suspended'}
+                      status={p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : ''}
                       dot
                     />
                   </Td>

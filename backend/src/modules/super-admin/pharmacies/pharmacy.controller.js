@@ -2,10 +2,7 @@ import {
   changeStatus,
   deletePharmacy,
   editPharmacy,
-  getDashboardStats,
   getPharmacies,
-  getSignUpTrend,
-  pharmacySettings,
   viewPharmacy,
 } from "./pharmacy.service.js";
 import { sendSuccess } from "../../../utils/response.js";
@@ -52,40 +49,10 @@ const pharmacyView = async (req, res, next) => {
   }
 };
 
-const dashboardStats = async (req, res, next) => {
-  try {
-    const result = await getDashboardStats();
-    return sendSuccess(res, result, "Dashboard Stats Fetched Successfully");
-  } catch (error) {
-    next(error);
-  }
-};
-
-const signUpTrends = async (req, res, next) => {
-  try {
-    const result = await getSignUpTrend(req.params.period);
-    return sendSuccess(res, result, "Sign Up Trends Fetched Successfully");
-  } catch (error) {
-    next(error);
-  }
-};
-
 const pharmacyStatus = async (req, res, next) => {
   try {
     const result = await changeStatus(req.params.id, req.body.status);
     return sendSuccess(res, result, "Pharmacy Status Changed Successfully");
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updatePharmacySettings = async (req, res, next) => {
-  try {
-    if (String(req.user.pharmacyId) !== String(req.params.id)) {
-      throw new UnauthorizedError("Access Denied. You can only update settings for your own pharmacy.");
-    }
-    const result = await pharmacySettings(req.params.id, req.body);
-    return sendSuccess(res, result, "Pharmacy Settings Updated Successfully");
   } catch (error) {
     next(error);
   }
@@ -96,8 +63,5 @@ export {
   pharmacyDelete,
   getAllPharmacies,
   pharmacyView,
-  dashboardStats,
-  signUpTrends,
   pharmacyStatus,
-  updatePharmacySettings,
 };
