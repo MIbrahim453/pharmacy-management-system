@@ -3,53 +3,20 @@ import Category from "../models/category.model.js";
 
 const seedCategories = async () => {
   try {
-    const categories = [
-      {
-        name: CATEGORIES.ANTI_BIOTIC,
-      },
-      {
-        name: CATEGORIES.ANAL_GESICS,
-      },
-      {
-        name: CATEGORIES.CARDIAC,
-      },
-      {
-        name: CATEGORIES.GASTRO,
-      },
-      {
-        name: CATEGORIES.HERBAL,
-      },
-      {
-        name: CATEGORIES.HOMEOPATHY,
-      },
-      {
-        name: CATEGORIES.PARACETAMOL,
-      },
-      {
-        name: CATEGORIES.RESPIRATORY,
-      },
-      {
-        name: CATEGORIES.VITAMINS,
-      },
-    ];
+    const categories = Object.values(CATEGORIES).map((name) => ({ name }));
 
     for (const category of categories) {
       await Category.updateOne(
-        {
-          name: category.name,
-        },
-        {
-          $setOnInsert: category,
-        },
-        {
-          upsert: true,
-        },
+        { name: category.name },
+        { $setOnInsert: category },
+        { upsert: true }
       );
     }
 
-    console.log("Category Seeded Successfully");
+    console.log("Categories seeded successfully");
   } catch (error) {
-    console.log("Error occur while seeding category", error);
+    console.error("Error while seeding categories:", error);
   }
 };
+
 export default seedCategories;
