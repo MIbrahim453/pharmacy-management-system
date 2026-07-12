@@ -194,7 +194,7 @@ const login = async (user, req) => {
   const userWithRole = await User.findById(user.id)
     .select("-password")
     .populate("role", "name")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId");
 
   logger.info("User Logged In Successfully");
 
@@ -298,7 +298,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 const getMe = async (userId) => {
   const user = await User.findById(userId)
     .populate("role", "name")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId");
   if (!user) {
     throw new BadRequestError("User Not Found");
   }

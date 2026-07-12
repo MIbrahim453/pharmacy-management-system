@@ -11,7 +11,7 @@ const addMedicine = async (userId, data) => {
   });
   if (existingMedicine) {
     throw new BadRequestError(
-      "Medicine Already Registered. You can edit or delete it to add a new one"
+      "Medicine Already Registered. You can edit or delete it to add a new one",
     );
   }
 
@@ -39,7 +39,7 @@ const addMedicine = async (userId, data) => {
   const medicine = await Medicine.findById(createMedicine._id)
     .populate("category")
     .populate("createdBy", "name email");
-  
+
   logger.info("Medicine Added Successfully");
 
   return medicine;
@@ -60,21 +60,17 @@ const editMedicine = async (userId, id, data) => {
     categoryId = newCategory._id;
   }
 
-  await Medicine.findByIdAndUpdate(
-    id,
-    {
-      $set: {
-        name: data.name,
-        genericName: data.genericName,
-        category: categoryId,
-        manufacturer: data.manufacturer,
-        saleUnit: data.saleUnit,
-        sellingPrice: data.sellingPrice,
-        reorderLevel: data.reorderLevel,
-        createdBy: userId,
-      },
-    }
-  );
+  await Medicine.findByIdAndUpdate(id, {
+    $set: {
+      name: data.name,
+      genericName: data.genericName,
+      category: categoryId,
+      manufacturer: data.manufacturer,
+      saleUnit: data.saleUnit,
+      reorderLevel: data.reorderLevel,
+      createdBy: userId,
+    },
+  });
 
   const medicine = await Medicine.findById(id)
     .populate("category")
@@ -86,9 +82,13 @@ const editMedicine = async (userId, id, data) => {
 };
 
 const deleteMedicine = async (id) => {
-  const activeBatchesCount = await MedicineBatch.countDocuments({ medicineId: id });
+  const activeBatchesCount = await MedicineBatch.countDocuments({
+    medicineId: id,
+  });
   if (activeBatchesCount > 0) {
-    throw new BadRequestError("Cannot delete medicine with active inventory batches or history.");
+    throw new BadRequestError(
+      "Cannot delete medicine with active inventory batches or history",
+    );
   }
 
   const deleteMed = await Medicine.findByIdAndDelete(id);
@@ -114,16 +114,24 @@ const viewMedicine = async (id) => {
 };
 
 const getMedicines = async (filters) => {
-  const { id, name = "", category = "", startIndex = 0, limit = 1000, order = "asc", searchTerm = "" } = filters;
+  const {
+    id,
+    name = "",
+    category = "",
+    startIndex = 0,
+    limit = 10,
+    order = "asc",
+    searchTerm = "",
+  } = filters;
 
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
   const catId = [];
-  
+
   if (searchTerm) {
     const categories = await Category.find({
-      name: { $regex: searchTerm, $options: "i" }
+      name: { $regex: searchTerm, $options: "i" },
     }).select("_id");
-    categories.forEach(category => {
+    categories.forEach((category) => {
       catId.push(category._id);
     });
   }
@@ -131,18 +139,18 @@ const getMedicines = async (filters) => {
   const medicines = await Medicine.find({
     $or: [
       {
-        name: { $regex: searchTerm || "", $options: "i" }
+        name: { $regex: searchTerm || "", $options: "i" },
       },
       {
-        genericName: { $regex: searchTerm || "", $options: "i" }
+        genericName: { $regex: searchTerm || "", $options: "i" },
       },
       {
-        manufacturer: { $regex: searchTerm || "", $options: "i" }
+        manufacturer: { $regex: searchTerm || "", $options: "i" },
       },
-      ...(catId.length > 0 ? [{ category: { $in: catId } }] : [])
+      ...(catId.length > 0 ? [{ category: { $in: catId } }] : []),
     ],
     ...(id && { _id: id }),
-    ...(name && { name: name })
+    ...(name && { name: name }),
   })
     .skip(Number(startIndex))
     .limit(Number(limit))
@@ -156,7 +164,9 @@ const getMedicines = async (filters) => {
 };
 
 const getMedicineCategoryNames = async () => {
-  const categories = await Category.find().select("name -_id").sort({ name: 1 });
+  const categories = await Category.find()
+    .select("name -_id")
+    .sort({ name: 1 });
   logger.info("Medicine Categories Fetched Successfully");
   return categories.map((category) => category.name);
 };

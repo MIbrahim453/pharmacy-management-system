@@ -8,7 +8,7 @@ const getInventoryStats = async () => {
   const medInStock = await Medicine.countDocuments({ status: "inStock" });
   const medLowStock = await Medicine.countDocuments({ status: "lowStock" });
   const medCritical = await Medicine.countDocuments({ status: "critical" });
-  
+
   const belowReorderMedicines = await Medicine.countDocuments({
     reorderLevel: { $gt: 0 },
     $expr: {
@@ -17,7 +17,7 @@ const getInventoryStats = async () => {
   });
 
   const today = new Date();
-  const next30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const next30Days = new Date(today.getDate() + 30);
 
   const expiringIn30Days = await MedicineBatch.countDocuments({
     status: "active",
@@ -45,6 +45,7 @@ const getInventoryStats = async () => {
   };
 };
 
+// Helper Function
 const getMedicinesWithBatches = async (query) => {
   const medicines = await Medicine.find(query)
     .populate("category", "name")
@@ -52,8 +53,9 @@ const getMedicinesWithBatches = async (query) => {
 
   const result = [];
   for (const medicine of medicines) {
-    const batches = await MedicineBatch.find({ medicineId: medicine._id })
-      .populate("supplierId", "name contact phone");
+    const batches = await MedicineBatch.find({
+      medicineId: medicine._id,
+    }).populate("supplierId", "name contact phone");
 
     result.push({
       ...medicine.toObject(),
@@ -71,27 +73,27 @@ const getInventory = async () => {
   });
 
   const today = new Date();
-  const next30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const next30Days = new Date(today.getDate() + 30);
 
   const expiringSoonBatches = await MedicineBatch.find({
     status: "active",
     expiryDate: { $gte: today, $lte: next30Days },
   });
-  
+
   const expiringSoonMedIds = Array.from(
-    new Set(expiringSoonBatches.map((b) => b.medicineId.toString()))
+    new Set(expiringSoonBatches.map((b) => b.medicineId.toString())),
   );
-  
+
   const expireSoon = await getMedicinesWithBatches({
     _id: { $in: expiringSoonMedIds },
   });
 
   const expiredBatches = await MedicineBatch.find({ status: "expired" });
-  
+
   const expiredMedIds = Array.from(
-    new Set(expiredBatches.map((b) => b.medicineId.toString()))
+    new Set(expiredBatches.map((b) => b.medicineId.toString())),
   );
-  
+
   const expired = await getMedicinesWithBatches({
     _id: { $in: expiredMedIds },
   });
@@ -107,9 +109,11 @@ const getInventory = async () => {
 };
 
 const getBatchesForMedicine = async (medicineId) => {
-  const batches = await MedicineBatch.find({ medicineId })
-    .populate("supplierId", "name contact phone");
-    
+  const batches = await MedicineBatch.find({ medicineId }).populate(
+    "supplierId",
+    "name contact phone",
+  );
+
   logger.info(`Batches for Medicine ${medicineId} Fetched Successfully`);
   return batches;
 };
@@ -120,7 +124,15 @@ const updateBatch = async (batchId, data) => {
     throw new NotFoundError("Batch Not Found");
   }
 
-  const fields = ["batchNumber", "expiryDate", "costPrice", "sellingPrice", "currentQty", "supplierId", "location"];
+  const fields = [
+    "batchNumber",
+    "expiryDate",
+    "costPrice",
+    "sellingPrice",
+    "currentQty",
+    "supplierId",
+    "location",
+  ];
   fields.forEach((field) => {
     if (data[field] !== undefined) {
       batch[field] = data[field];
@@ -129,7 +141,11 @@ const updateBatch = async (batchId, data) => {
 
   if (batch.expiryDate && new Date(batch.expiryDate) <= new Date()) {
     batch.status = "expired";
-  } else if (batch.status === "expired" && batch.expiryDate && new Date(batch.expiryDate) > new Date()) {
+  } else if (
+    batch.status === "expired" &&
+    batch.expiryDate &&
+    new Date(batch.expiryDate) > new Date()
+  ) {
     batch.status = "active";
   }
 
@@ -137,8 +153,10 @@ const updateBatch = async (batchId, data) => {
 
   await syncMedicineStockAndExpiry(batch.medicineId);
 
-  const updatedBatch = await MedicineBatch.findById(batchId)
-    .populate("supplierId", "name contact phone");
+  const updatedBatch = await MedicineBatch.findById(batchId).populate(
+    "supplierId",
+    "name contact phone",
+  );
 
   logger.info(`Batch ${batchId} Updated and Stock Synchronized`);
   return updatedBatch;
@@ -156,8 +174,10 @@ const discardBatch = async (batchId) => {
 
   await syncMedicineStockAndExpiry(batch.medicineId);
 
-  const updatedBatch = await MedicineBatch.findById(batchId)
-    .populate("supplierId", "name contact phone");
+  const updatedBatch = await MedicineBatch.findById(batchId).populate(
+    "supplierId",
+    "name contact phone",
+  );
 
   logger.info(`Batch ${batchId} Discarded and Stock Synchronized`);
   return updatedBatch;

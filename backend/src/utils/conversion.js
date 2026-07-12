@@ -1,6 +1,11 @@
 import { BadRequestError } from "./errors.js";
 
-export const calculateCalculatedStock = (purchaseUnit, purchaseQty, packaging = [], saleUnit) => {
+export const calculateCalculatedStock = (
+  purchaseUnit,
+  purchaseQty,
+  packaging = [],
+  saleUnit,
+) => {
   if (!purchaseQty || purchaseQty <= 0) {
     throw new BadRequestError("Purchase quantity must be greater than zero");
   }
@@ -17,10 +22,12 @@ export const calculateCalculatedStock = (purchaseUnit, purchaseQty, packaging = 
   let currentQty = purchaseQty;
 
   while (currentUnit !== sUnit) {
-    const step = packaging.find((s) => s.from.trim().toLowerCase() === currentUnit);
+    const step = packaging.find(
+      (s) => s.from.trim().toLowerCase() === currentUnit,
+    );
     if (!step) {
       throw new BadRequestError(
-        `Packaging conversion chain is incomplete or cannot convert from '${currentUnit}' to sale unit '${sUnit}'`
+        `Packaging conversion chain is incomplete or cannot convert from '${currentUnit}' to sale unit '${sUnit}'`,
       );
     }
 
@@ -28,11 +35,15 @@ export const calculateCalculatedStock = (purchaseUnit, purchaseQty, packaging = 
     const factor = Number(step.factor);
 
     if (isNaN(factor) || factor <= 0) {
-      throw new BadRequestError(`Conversion factor must be greater than zero for step ${step.from} -> ${step.to}`);
+      throw new BadRequestError(
+        `Conversion factor must be greater than zero for step ${step.from} -> ${step.to}`,
+      );
     }
 
     if (visited.has(nextUnit)) {
-      throw new BadRequestError(`Cyclic conversion path detected at unit: ${nextUnit}`);
+      throw new BadRequestError(
+        `Cyclic conversion path detected at unit: ${nextUnit}`,
+      );
     }
 
     visited.add(nextUnit);
