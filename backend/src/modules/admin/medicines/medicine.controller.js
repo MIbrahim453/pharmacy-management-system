@@ -46,7 +46,7 @@ const medicineView = async (req, res, next) => {
 
 const getAllMedicines = async (req, res, next) => {
   try {
-    const result = await getMedicines(req.query);
+    const result = await getMedicines(req.user.id, req.query);
     return sendSuccess(res, result, "Medicines Fetched Successfully");
   } catch (error) {
     next(error);

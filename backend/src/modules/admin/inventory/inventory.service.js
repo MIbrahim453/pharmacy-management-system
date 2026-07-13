@@ -1,15 +1,23 @@
 import Medicine from "../../../database/models/medicine.model.js";
+import User from "../../../database/models/user.model.js";
 import MedicineBatch from "../../../database/models/medicineBatch.model.js";
 import logger from "../../../utils/logger.js";
 import { syncMedicineStockAndExpiry } from "../../../utils/sync.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
 
-const getInventoryStats = async () => {
-  const medInStock = await Medicine.countDocuments({ status: "inStock" });
-  const medLowStock = await Medicine.countDocuments({ status: "lowStock" });
-  const medCritical = await Medicine.countDocuments({ status: "critical" });
+const getInventoryStats = async (userId) => {
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+
+  const userMedicineIds = pharmacyId ? await Medicine.find({ pharmacyId }).select("_id") : [];
+  const scopedMedicineIds = userMedicineIds.map((medicine) => medicine._id);
+
+  const medInStock = await Medicine.countDocuments({ status: "inStock", pharmacyId });
+  const medLowStock = await Medicine.countDocuments({ status: "lowStock", pharmacyId });
+  const medCritical = await Medicine.countDocuments({ status: "critical", pharmacyId });
 
   const belowReorderMedicines = await Medicine.countDocuments({
+    pharmacyId,
     reorderLevel: { $gt: 0 },
     $expr: {
       $lte: ["$stockQty", "$reorderLevel"],
@@ -19,7 +27,10 @@ const getInventoryStats = async () => {
   const today = new Date();
   const next30Days = new Date(today.getDate() + 30);
 
+  const inventoryQuery = scopedMedicineIds.length > 0 ? { medicineId: { $in: scopedMedicineIds } } : { medicineId: { $in: [] } };
+
   const expiringIn30Days = await MedicineBatch.countDocuments({
+    ...inventoryQuery,
     status: "active",
     expiryDate: {
       $gte: today,
@@ -27,9 +38,18 @@ const getInventoryStats = async () => {
     },
   });
 
-  const expired = await MedicineBatch.countDocuments({ status: "expired" });
-  const discarded = await MedicineBatch.countDocuments({ status: "discarded" });
-  const totalActive = await MedicineBatch.countDocuments({ status: "active" });
+  const expired = await MedicineBatch.countDocuments({
+    ...inventoryQuery,
+    status: "expired",
+  });
+  const discarded = await MedicineBatch.countDocuments({
+    ...inventoryQuery,
+    status: "discarded",
+  });
+  const totalActive = await MedicineBatch.countDocuments({
+    ...inventoryQuery,
+    status: "active",
+  });
 
   logger.info("Inventory Stats Fetched Successfully");
 
@@ -46,8 +66,11 @@ const getInventoryStats = async () => {
 };
 
 // Helper Function
-const getMedicinesWithBatches = async (query) => {
-  const medicines = await Medicine.find(query)
+const getMedicinesWithBatches = async (userId, query = {}) => {
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+
+  const medicines = await Medicine.find({ pharmacyId, ...query })
     .populate("category", "name")
     .populate("createdBy", "name email");
 
@@ -65,17 +88,23 @@ const getMedicinesWithBatches = async (query) => {
   return result;
 };
 
-const getInventory = async () => {
-  const allMedicines = await getMedicinesWithBatches({});
+const getInventory = async (userId) => {
+  const allMedicines = await getMedicinesWithBatches(userId, {});
 
-  const lowStock = await getMedicinesWithBatches({
+  const lowStock = await getMedicinesWithBatches(userId, {
     status: { $in: ["lowStock", "critical"] },
   });
 
   const today = new Date();
   const next30Days = new Date(today.getDate() + 30);
 
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+  const userMedicineIds = pharmacyId ? await Medicine.find({ pharmacyId }).select("_id") : [];
+  const scopedMedicalIds = userMedicineIds.map((medicine) => medicine._id);
+
   const expiringSoonBatches = await MedicineBatch.find({
+    medicineId: { $in: scopedMedicalIds },
     status: "active",
     expiryDate: { $gte: today, $lte: next30Days },
   });
@@ -84,17 +113,17 @@ const getInventory = async () => {
     new Set(expiringSoonBatches.map((b) => b.medicineId.toString())),
   );
 
-  const expireSoon = await getMedicinesWithBatches({
+  const expireSoon = await getMedicinesWithBatches(userId, {
     _id: { $in: expiringSoonMedIds },
   });
 
-  const expiredBatches = await MedicineBatch.find({ status: "expired" });
+  const expiredBatches = await MedicineBatch.find({ medicineId: { $in: scopedMedicalIds }, status: "expired" });
 
   const expiredMedIds = Array.from(
     new Set(expiredBatches.map((b) => b.medicineId.toString())),
   );
 
-  const expired = await getMedicinesWithBatches({
+  const expired = await getMedicinesWithBatches(userId, {
     _id: { $in: expiredMedIds },
   });
 
@@ -108,7 +137,15 @@ const getInventory = async () => {
   };
 };
 
-const getBatchesForMedicine = async (medicineId) => {
+const getBatchesForMedicine = async (userId, medicineId) => {
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+
+  const medicine = await Medicine.findOne({ _id: medicineId, pharmacyId });
+  if (!medicine) {
+    throw new NotFoundError("Medicine Not Found");
+  }
+
   const batches = await MedicineBatch.find({ medicineId }).populate(
     "supplierId",
     "name contact phone",
@@ -118,9 +155,16 @@ const getBatchesForMedicine = async (medicineId) => {
   return batches;
 };
 
-const updateBatch = async (batchId, data) => {
+const updateBatch = async (userId, batchId, data) => {
   const batch = await MedicineBatch.findById(batchId);
   if (!batch) {
+    throw new NotFoundError("Batch Not Found");
+  }
+
+  const medicine = await Medicine.findById(batch.medicineId);
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+  if (!medicine || medicine.pharmacyId?.toString() !== pharmacyId?.toString()) {
     throw new NotFoundError("Batch Not Found");
   }
 
@@ -151,7 +195,7 @@ const updateBatch = async (batchId, data) => {
 
   await batch.save();
 
-  await syncMedicineStockAndExpiry(batch.medicineId);
+  await syncMedicineStockAndExpiry(batch.medicineId, null, userId);
 
   const updatedBatch = await MedicineBatch.findById(batchId).populate(
     "supplierId",
@@ -162,9 +206,14 @@ const updateBatch = async (batchId, data) => {
   return updatedBatch;
 };
 
-const discardBatch = async (batchId) => {
+const discardBatch = async (userId, batchId) => {
   const batch = await MedicineBatch.findById(batchId);
   if (!batch) {
+    throw new NotFoundError("Batch Not Found");
+  }
+
+  const medicine = await Medicine.findById(batch.medicineId);
+  if (!medicine || medicine.createdBy?.toString() !== userId?.toString()) {
     throw new NotFoundError("Batch Not Found");
   }
 
@@ -172,7 +221,7 @@ const discardBatch = async (batchId) => {
   batch.currentQty = 0;
   await batch.save();
 
-  await syncMedicineStockAndExpiry(batch.medicineId);
+  await syncMedicineStockAndExpiry(batch.medicineId, null, userId);
 
   const updatedBatch = await MedicineBatch.findById(batchId).populate(
     "supplierId",

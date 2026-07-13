@@ -16,7 +16,8 @@ const purchaseCreate = async (req, res, next) => {
 
 const purchaseList = async (req, res, next) => {
   try {
-    const result = await getPurchases(req.query);
+    const userId = req.user?.id || req.user?._id;
+    const result = await getPurchases(userId, req.query);
     return sendSuccess(res, result, "Purchases Fetched Successfully");
   } catch (error) {
     next(error);
@@ -25,7 +26,8 @@ const purchaseList = async (req, res, next) => {
 
 const purchaseView = async (req, res, next) => {
   try {
-    const result = await viewPurchase(req.params.id);
+    const userId = req.user?.id || req.user?._id;
+    const result = await viewPurchase(userId, req.params.id);
     return sendSuccess(res, result, "Purchase Details Fetched Successfully");
   } catch (error) {
     next(error);

@@ -85,7 +85,7 @@ const viewSupplier = async (id) => {
   return supplier;
 };
 
-const getSuppliers = async (filters) => {
+const getSuppliers = async (userId, filters = {}) => {
   const {
     id,
     name = "",
@@ -95,9 +95,16 @@ const getSuppliers = async (filters) => {
     order = "asc",
   } = filters;
 
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+  if (!pharmacyId) {
+    return [];
+  }
+
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
 
   const suppliers = await Supplier.find({
+    pharmacyId,
     $or: [
       { name: { $regex: name, $options: "i" } },
       { contact: { $regex: contact, $options: "i" } },
@@ -109,7 +116,7 @@ const getSuppliers = async (filters) => {
     .skip(Number(startIndex))
     .limit(Number(limit))
     .sort({ updatedAt: sortDirection })
-    .populate("pharmacyId", "pharmacy_name")
+    .populate("pharmacyId", "pharmacyName")
     .populate("createdBy", "name email");
 
   logger.info("Suppliers Fetched Successfully");

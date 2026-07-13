@@ -83,6 +83,10 @@ const medicineBatchSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    pharmacyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Pharmacy",
+    },
   },
   { timestamps: true }
 );

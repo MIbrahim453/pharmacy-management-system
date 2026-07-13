@@ -1,12 +1,16 @@
 import Medicine from "../../../database/models/medicine.model.js";
+import User from "../../../database/models/user.model.js";
 import Category from "../../../database/models/category.model.js";
 import logger from "../../../utils/logger.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
 import MedicineBatch from "../../../database/models/medicineBatch.model.js";
 
 const addMedicine = async (userId, data) => {
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+
   const existingMedicine = await Medicine.findOne({
-    createdBy: userId,
+    pharmacyId,
     name: data.name,
   });
   if (existingMedicine) {
@@ -15,14 +19,7 @@ const addMedicine = async (userId, data) => {
     );
   }
 
-  let categoryId;
-  const existingCategory = await Category.findOne({ name: data.category });
-  if (existingCategory) {
-    categoryId = existingCategory._id;
-  } else {
-    const newCategory = await Category.create({ name: data.category });
-    categoryId = newCategory._id;
-  }
+  const categoryId = await Category.findOne({ name: data.category });
 
   const createMedicine = await Medicine.create({
     name: data.name,
@@ -34,6 +31,7 @@ const addMedicine = async (userId, data) => {
     reorderLevel: data.reorderLevel || 0,
     status: "critical",
     createdBy: userId,
+    pharmacyId,
   });
 
   const medicine = await Medicine.findById(createMedicine._id)
@@ -51,14 +49,13 @@ const editMedicine = async (userId, id, data) => {
     throw new NotFoundError("Medicine Not Found");
   }
 
-  let categoryId;
-  const existingCategory = await Category.findOne({ name: data.category });
-  if (existingCategory) {
-    categoryId = existingCategory._id;
-  } else {
-    const newCategory = await Category.create({ name: data.category });
-    categoryId = newCategory._id;
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+  if (pharmacyId && findMedicine.pharmacyId?.toString() !== pharmacyId.toString()) {
+    throw new NotFoundError("Medicine Not Found");
   }
+
+  const categoryId = await Category.findOne({ name: data.category });
 
   await Medicine.findByIdAndUpdate(id, {
     $set: {
@@ -113,7 +110,7 @@ const viewMedicine = async (id) => {
   return medicine;
 };
 
-const getMedicines = async (filters) => {
+const getMedicines = async (userId, filters) => {
   const {
     id,
     name = "",
@@ -127,6 +124,13 @@ const getMedicines = async (filters) => {
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
   const catId = [];
 
+    if (category) {
+      const categories = await Category.find({
+        name: { $regex: category, $options: "i" },
+      }).select("_id");
+      categories.forEach((item) => catId.push(item._id));
+    }
+
   if (searchTerm) {
     const categories = await Category.find({
       name: { $regex: searchTerm, $options: "i" },
@@ -136,7 +140,11 @@ const getMedicines = async (filters) => {
     });
   }
 
+  const user = await User.findById(userId);
+  const pharmacyId = user?.pharmacyId;
+
   const medicines = await Medicine.find({
+    pharmacyId,
     $or: [
       {
         name: { $regex: searchTerm || "", $options: "i" },

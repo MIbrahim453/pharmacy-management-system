@@ -103,13 +103,14 @@ const createPurchase = async (userId, data) => {
         initialQty: item.calculatedQty,
         currentQty: item.calculatedQty,
         location: item.location || "",
+        pharmacyId: user.pharmacyId,
         status: "active",
       });
     }
   }
 
   for (const medicineId of uniqueMedicineIds) {
-    await syncMedicineStockAndExpiry(medicineId);
+    await syncMedicineStockAndExpiry(medicineId, null, userId);
   }
 
   const populatedPurchase = await Purchase.findById(purchase._id)
@@ -122,7 +123,7 @@ const createPurchase = async (userId, data) => {
   return populatedPurchase;
 };
 
-const getPurchases = async (filters) => {
+const getPurchases = async (userId, filters = {}) => {
   const {
     supplierId,
     purchaseNumber = "",
@@ -132,6 +133,11 @@ const getPurchases = async (filters) => {
     limit = 1000,
     order = "desc",
   } = filters;
+
+  const user = await User.findById(userId);
+  if (!user || !user.pharmacyId) {
+    return [];
+  }
 
   const sortDirection = order.toLowerCase() === "asc" ? 1 : -1;
 
@@ -154,6 +160,8 @@ const getPurchases = async (filters) => {
       query.purchaseDate.$lte = new Date(endDate);
     }
   }
+  
+  query.pharmacyId = user.pharmacyId;
 
   const purchases = await Purchase.find(query)
     .skip(Number(startIndex))
@@ -167,8 +175,13 @@ const getPurchases = async (filters) => {
   return purchases;
 };
 
-const viewPurchase = async (id) => {
-  const purchase = await Purchase.findById(id)
+const viewPurchase = async (userId, id) => {
+  const user = await User.findById(userId);
+  if (!user || !user.pharmacyId) {
+    throw new NotFoundError("Purchase Not Found");
+  }
+
+  const purchase = await Purchase.findOne({ _id: id, pharmacyId: user.pharmacyId })
     .populate("supplierId", "name contact phone")
     .populate("createdBy", "name email")
     .populate("items.medicineId", "name brand category genericName manufacturer saleUnit sellingPrice");

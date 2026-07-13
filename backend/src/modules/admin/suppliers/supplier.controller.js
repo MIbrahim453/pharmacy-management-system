@@ -45,7 +45,8 @@ const supplierView = async (req, res, next) => {
 
 const getAllSuppliers = async (req, res, next) => {
   try {
-    const result = await getSuppliers(req.query);
+    const userId = req.user?.id || req.user?._id;
+    const result = await getSuppliers(userId, req.query);
     return sendSuccess(res, result, "Suppliers Fetched Successfully");
   } catch (error) {
     next(error);

@@ -46,6 +46,10 @@ const medicineSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    pharmacyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Pharmacy",
+    },
     status: {
       type: String,
       enum: ["inStock", "lowStock", "critical"],
