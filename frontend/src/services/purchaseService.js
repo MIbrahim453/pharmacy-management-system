@@ -9,6 +9,7 @@ export const createPurchase = async (purchaseData) => {
     invoiceNumber: purchaseData.invoiceNumber || "",
     purchaseDate: purchaseData.purchaseDate,
     notes: purchaseData.notes || "",
+    paymentMethod: purchaseData.paymentMethod || "Cash",
     items: (purchaseData.items || []).map((item) => ({
       medicineId: item.medicineId,
       batchNumber: item.batchNumber,
