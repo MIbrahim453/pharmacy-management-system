@@ -11,6 +11,8 @@ import staffRoutes from "../modules/admin/staffDetails/staff.routes.js";
 import inventoryRoutes from "../modules/admin/inventory/inventory.routes.js";
 import purchaseRoutes from "../modules/admin/purchases/purchase.routes.js";
 import posRoutes from "../modules/staff/pos/pos.routes.js";
+import staffInvoiceRoutes from "../modules/staff/invoice/invoice.routes.js";
+import adminInvoiceRoutes from "../modules/admin/invoices/invoice.routes.js";
 
 const router = express.Router();
 
@@ -28,5 +30,7 @@ router.use(`${API_PREFIX}/admin-staff-details`, staffRoutes);
 router.use(`${API_PREFIX}/admin-inventory`, inventoryRoutes);
 router.use(`${API_PREFIX}/admin-purchases`, purchaseRoutes);
 router.use(`${API_PREFIX}/staff-pos`, posRoutes);
+router.use(`${API_PREFIX}/staff-invoices`, staffInvoiceRoutes);
+router.use(`${API_PREFIX}/admin-invoices`, adminInvoiceRoutes);
 
 export default router;

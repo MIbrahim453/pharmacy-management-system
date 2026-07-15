@@ -3,38 +3,31 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, ShoppingCart, Wallet, Plus, Minus, Trash2,
-  CreditCard, Banknote, Timer, CheckCircle,
+  CreditCard, Banknote, CheckCircle,
 } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
-import { getPosMedicines, getPosCategories } from '../../../services/posService';
+import { getPosMedicines, getPosCategories, createPosInvoice } from '../../../services/posService';
 
 const abbr = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const formatPKR = (n) => 'Rs ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const generateInvoiceNumber = () => {
-  const now = new Date();
-  const y = now.getFullYear().toString().slice(-2);
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  const r = Math.floor(Math.random() * 9000 + 1000);
-  return `INV-${y}${m}${d}-${r}`;
-};
 
-const METHOD_ICONS = { Cash: <Banknote size={15} />, Card: <CreditCard size={15} />, Later: <Timer size={15} /> };
+const METHOD_ICONS = { Cash: <Banknote size={15} />, Card: <CreditCard size={15} />, 'Bank Transfer': <Wallet size={15} /> };
 
 export default function Billing() {
   const [medicines, setMedicines] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [payMethod, setPayMethod] = useState('Cash');
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('All');
   const [done, setDone] = useState(false);
-  const [lastInv, setLastInv] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [customerName, setCustomerName] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
   const [qtyMed, setQtyMed] = useState(null);
@@ -56,7 +49,7 @@ export default function Billing() {
     fetchCategories();
   }, []);
 
-  // Fetch medicines when query or category changes
+  // Fetch medicines when query, category, or refreshTrigger changes
   useEffect(() => {
     const fetchMedicines = async () => {
       setLoading(true);
@@ -81,14 +74,14 @@ export default function Billing() {
       }
     };
     fetchMedicines();
-  }, [query, cat]);
+  }, [query, cat, refreshTrigger]);
 
   const list = medicines;
 
   const entries = Object.values(cartItems);
   const DISCOUNT_RATE = 0.05;
   const subtotal = entries.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const discount = subtotal * DISCOUNT_RATE;
+  const discount = Math.round(subtotal * DISCOUNT_RATE);
   const total = subtotal - discount;
 
   const computedQty = useMemo(() => {
@@ -132,20 +125,49 @@ export default function Billing() {
     setCartItems({});
   };
 
-  const checkout = () => {
+  const checkout = async () => {
     if (!customerName.trim() || !customerMobile.trim()) {
       toast.error('Enter customer name and mobile number to checkout');
       return;
     }
-    const invNo = generateInvoiceNumber();
-    setLastInv(invNo);
-    const where = payMethod === 'Later' ? 'added to payment queue' : 'processed';
-    toast.success(`${invNo} · ${formatPKR(total)} ${where}`);
-    clearCart();
-    setCustomerName('');
-    setCustomerMobile('');
-    setDone(true);
-    setTimeout(() => setDone(false), 2000);
+    if (entries.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const items = entries.map((item) => ({
+        medicineId: item.id,
+        quantity: item.qty,
+      }));
+
+      const payload = {
+        customerName: customerName.trim(),
+        customerPhone: customerMobile.trim(),
+        paymentMethod: payMethod,
+        discount: discount, // Send the calculated discount
+        items,
+      };
+
+      const result = await createPosInvoice(payload);
+      const invNo = result.invoiceNumber;
+      toast.success(`${invNo} · ${formatPKR(total)} processed successfully`);
+      clearCart();
+      setCustomerName('');
+      setCustomerMobile('');
+      setDone(true);
+      setTimeout(() => setDone(false), 2000);
+      
+      // Refresh the medicines list to update stock
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      const errMsg = error.response?.data?.message || 'Failed to complete sale';
+      toast.error(errMsg);
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -328,12 +350,12 @@ export default function Billing() {
               </div>
 
               {/* Payment method */}
-              <div className="flex gap-2 pt-1">
-                {['Cash', 'Card', 'Later'].map((m) => (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {['Cash', 'Card', 'Bank Transfer', 'Cheque'].map((m) => (
                   <button
                     key={m}
                     onClick={() => setPayMethod(m)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-all ${m === payMethod
+                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-all ${m === payMethod
                         ? 'bg-primary text-on-primary shadow-sm'
                         : 'bg-surface-container-high text-on-surface-variant hover:bg-primary/[0.08]'
                       }`}
@@ -343,8 +365,13 @@ export default function Billing() {
                 ))}
               </div>
 
-              <Button className="w-full justify-center mt-1" onClick={checkout} icon={done ? <CheckCircle size={16} /> : <Wallet size={16} />}>
-                {done ? 'Sale complete!' : `Complete Sale · ${formatPKR(total)}`}
+              <Button
+                className="w-full justify-center mt-1"
+                onClick={checkout}
+                loading={checkoutLoading}
+                icon={done ? <CheckCircle size={16} /> : <Wallet size={16} />}
+              >
+                {done ? 'Invoice created!' : `Complete Invoice · ${formatPKR(total)}`}
               </Button>
             </div>
           )}

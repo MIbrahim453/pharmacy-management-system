@@ -207,6 +207,10 @@ export const purchaseCreateSchema = yup.object().shape({
     .date()
     .typeError("Please enter a valid purchase date")
     .required("Purchase date is required"),
+  paymentMethod: yup
+    .string()
+    .oneOf(["Cash", "Card", "Bank Transfer", "Cheque"], "Invalid payment method")
+    .required("Payment method is required"),
   notes: yup.string().optional(),
   items: yup
     .array()

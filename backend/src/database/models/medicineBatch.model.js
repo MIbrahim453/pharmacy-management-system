@@ -35,6 +35,10 @@ const medicineBatchSchema = new mongoose.Schema(
       ref: "Supplier",
       default: null,
     },
+    pharmacyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Pharmacy",
+    },
     expiryDate: {
       type: Date,
       required: true,
@@ -82,10 +86,6 @@ const medicineBatchSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
-    },
-    pharmacyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Pharmacy",
     },
   },
   { timestamps: true }
