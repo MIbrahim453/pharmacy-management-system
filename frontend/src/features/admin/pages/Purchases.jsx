@@ -53,6 +53,7 @@ export default function Purchases() {
       supplierId: '',
       invoiceNumber: '',
       purchaseDate: new Date().toISOString().split('T')[0],
+      paymentMethod: 'Cash',
       notes: '',
       items: [{
         medicineId: '',
@@ -150,6 +151,7 @@ export default function Purchases() {
       supplierId: suppliers[0]?.id || '',
       invoiceNumber: '',
       purchaseDate: new Date().toISOString().split('T')[0],
+      paymentMethod: 'Cash',
       notes: '',
       items: [{
         medicineId: '',
@@ -348,7 +350,7 @@ export default function Purchases() {
         }
       >
         <form id="purchase-form" onSubmit={handleSubmit(handleAddPurchase)} className="p-6 space-y-5">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <Select
               label="Supplier"
               {...register('supplierId')}
@@ -367,6 +369,13 @@ export default function Purchases() {
               type="date"
               {...register('purchaseDate')}
               error={errors.purchaseDate?.message}
+              required
+            />
+            <Select
+              label="Payment Method"
+              {...register('paymentMethod')}
+              options={["Cash", "Card", "Bank Transfer", "Cheque"]}
+              error={errors.paymentMethod?.message}
               required
             />
           </div>

@@ -6,6 +6,11 @@ import { syncMedicineStockAndExpiry } from "../../../utils/sync.js";
 import { calculateCalculatedStock } from "../../../utils/conversion.js";
 import logger from "../../../utils/logger.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
+import Invoice from "../../../database/models/invoice.model.js";
+import { generateUniqueNumber } from "../../../utils/helper.js";
+import Supplier from "../../../database/models/supplier.model.js";
+import Payment from "../../../database/models/payment.model.js";
+import Transaction from "../../../database/models/transaction.model.js";
 
 const createPurchase = async (userId, data) => {
   const user = await User.findById(userId);
@@ -13,11 +18,20 @@ const createPurchase = async (userId, data) => {
     throw new BadRequestError("User is not associated with any pharmacy");
   }
 
-  const { supplierId, invoiceNumber, purchaseDate, notes, items } = data;
+  const {
+    supplierId,
+    invoiceNumber,
+    purchaseDate,
+    paymentMethod,
+    notes,
+    items,
+  } = data;
 
-  const purchaseNumber = `PUR-${Date.now().toString().slice(-6)}-${Math.floor(
-    100 + Math.random() * 900
-  )}`;
+  const supplier = await Supplier.findById(supplierId);
+  if (!supplier) {
+    throw new NotFoundError("Supplier not found");
+  }
+  const purchaseNumber = generateUniqueNumber("PUR");
 
   const uniqueMedicineIds = new Set();
   const processedItems = [];
@@ -35,13 +49,14 @@ const createPurchase = async (userId, data) => {
       item.purchaseUnit,
       item.purchaseQty,
       item.packaging || [],
-      medicineObj.saleUnit
+      medicineObj.saleUnit,
     );
 
     totalAmount += calculatedQty * item.costPrice;
 
     processedItems.push({
       medicineId: item.medicineId,
+      medicineName: medicineObj.name,
       batchNumber: item.batchNumber,
       expiryDate: item.expiryDate,
       purchaseUnit: item.purchaseUnit,
@@ -71,6 +86,7 @@ const createPurchase = async (userId, data) => {
     const existingBatch = await MedicineBatch.findOne({
       medicineId: item.medicineId,
       batchNumber: item.batchNumber,
+      pharmacyId: user.pharmacyId,
     });
 
     if (existingBatch) {
@@ -94,6 +110,7 @@ const createPurchase = async (userId, data) => {
         medicineId: item.medicineId,
         batchNumber: item.batchNumber,
         supplierId,
+        pharmacyId: user.pharmacyId,
         expiryDate: item.expiryDate,
         purchaseUnit: item.purchaseUnit,
         purchaseQty: item.purchaseQty,
@@ -113,12 +130,77 @@ const createPurchase = async (userId, data) => {
     await syncMedicineStockAndExpiry(medicineId, null, userId);
   }
 
+  const invoiceItems = processedItems.map((item) => ({
+    medicineId: item.medicineId,
+    medicineName: item.medicineName,
+    quantity: item.calculatedQty,
+    unitPrice: item.costPrice,
+    total: item.calculatedQty * item.costPrice,
+  }));
+
+  const invoiceNumberForInvoice = invoiceNumber || purchaseNumber;
+
+  const invoice = await Invoice.create({
+    invoiceNumber: invoiceNumberForInvoice,
+    pharmacyId: user.pharmacyId,
+    supplierId,
+    purchaseId: purchase._id,
+    invoiceType: "payable",
+    customerName: `${supplier.name} - ${supplier.contact} Supplier`,
+    customerPhone: supplier.phone,
+    items: invoiceItems,
+    subTotal: totalAmount,
+    grandTotal: totalAmount,
+    discount: 0,
+    tax: 0,
+    paymentStatus: "Paid",
+    paymentMethod: data.paymentMethod,
+    createdBy: userId,
+  });
+
+  const payment = await Payment.create({
+    pharmacyId: user.pharmacyId,
+    invoiceId: invoice._id,
+    type: "outflow",
+    amount: totalAmount,
+    paymentGateway: data.paymentMethod,
+    status: "completed",
+    performedBy: user._id,
+  });
+
+  const transactionNumber = generateUniqueNumber("TRAN");
+  const transaction = await Transaction.create({
+    transactionNumber,
+    pharmacyId: user.pharmacyId,
+    paymentId: payment._id,
+    amount: totalAmount,
+    type: "outflow",
+    relatedTo: "Purchase",
+    paymentMethod: data.paymentMethod,
+    status: "success",
+    performedBy: user._id,
+    note: `Payment Completed for Invoice ${invoiceNumberForInvoice}`,
+  });
+
   const populatedPurchase = await Purchase.findById(purchase._id)
     .populate("supplierId", "name contact phone")
     .populate("createdBy", "name email")
-    .populate("items.medicineId", "name brand genericName manufacturer saleUnit sellingPrice");
+    .populate(
+      "items.medicineId",
+      "name brand genericName manufacturer saleUnit sellingPrice",
+    );
 
-  logger.info(`Purchase ${purchaseNumber} Created and Stock Synchronized Successfully`);
+  const populatedInvoice = await Invoice.findById(invoice._id)
+    .populate("pharmacyId", "pharmacyName address phone")
+    .populate("supplierId", "name contact phone")
+    .populate("createdBy", "name email")
+    .populate(
+      "items.medicineId",
+      "name brand genericName manufacturer saleUnit sellingPrice",
+    );
+  logger.info(
+    `Purchase ${purchaseNumber} Created and Stock Synchronized Successfully`,
+  );
 
   return populatedPurchase;
 };
@@ -160,7 +242,7 @@ const getPurchases = async (userId, filters = {}) => {
       query.purchaseDate.$lte = new Date(endDate);
     }
   }
-  
+
   query.pharmacyId = user.pharmacyId;
 
   const purchases = await Purchase.find(query)
@@ -181,10 +263,16 @@ const viewPurchase = async (userId, id) => {
     throw new NotFoundError("Purchase Not Found");
   }
 
-  const purchase = await Purchase.findOne({ _id: id, pharmacyId: user.pharmacyId })
+  const purchase = await Purchase.findOne({
+    _id: id,
+    pharmacyId: user.pharmacyId,
+  })
     .populate("supplierId", "name contact phone")
     .populate("createdBy", "name email")
-    .populate("items.medicineId", "name brand category genericName manufacturer saleUnit sellingPrice");
+    .populate(
+      "items.medicineId",
+      "name brand category genericName manufacturer saleUnit sellingPrice",
+    );
 
   if (!purchase) {
     throw new NotFoundError("Purchase Not Found");

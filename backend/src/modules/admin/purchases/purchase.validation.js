@@ -10,6 +10,7 @@ const purchaseCreateValidation = joi.object({
   supplierId: joi.string().required(),
   invoiceNumber: joi.string().allow("").optional(),
   purchaseDate: joi.date().required(),
+  paymentMethod: joi.string().valid("Cash", "Card", "Bank Transfer", "Cheque").optional().default("Cash"),
   notes: joi.string().allow("").optional(),
   items: joi
     .array()
