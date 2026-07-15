@@ -28,11 +28,6 @@ const userSchema = new mongoose.Schema(
     staffCounter: {
       type: String,
     },
-    staffInvoices: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Invoice",
-      default: null
-    },
     pharmacyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Pharmacy",
