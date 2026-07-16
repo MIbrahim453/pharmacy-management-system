@@ -37,7 +37,7 @@ const config = {
   //Email
   email: {
     host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT),
+    port: Number(process.env.EMAIL_PORT) || 2525,
     from: process.env.EMAIL_FROM,
     auth: {
       user: process.env.EMAIL_USER,
