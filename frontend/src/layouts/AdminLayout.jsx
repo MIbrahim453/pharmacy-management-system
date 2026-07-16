@@ -7,7 +7,7 @@ import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 
 const PAGE_META = {
-  '/admin/dashboard':  { title: 'Dashboard',   crumb: 'Crescent Care Pharmacy' },
+  '/admin/dashboard':  { title: 'Dashboard',   crumb: 'Admin Dashboard' },
   '/admin/medicines':  { title: 'Medicines',    crumb: 'Admin · Manage' },
   '/admin/suppliers':  { title: 'Suppliers',    crumb: 'Admin · Manage' },
   '/admin/staff':      { title: 'Staff',        crumb: 'Admin · Manage' },
@@ -20,10 +20,19 @@ const PAGE_META = {
 
 export default function AdminLayout({ children }) {
   const { pathname } = useLocation();
-  const meta = PAGE_META[pathname] || { title: 'Admin', crumb: '' };
-  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  const meta = PAGE_META[pathname]
+    ? {
+        ...PAGE_META[pathname],
+        crumb: pathname === '/admin/dashboard' && user?.pharmacyName
+          ? user.pharmacyName.replace(/crescent\s*/gi, "")
+          : PAGE_META[pathname].crumb
+      }
+    : { title: 'Admin', crumb: '' };
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+
 
   useLayoutEffect(() => {
     if (window.innerWidth < 1024) {
@@ -47,7 +56,7 @@ export default function AdminLayout({ children }) {
         onLogout={handleLogout}
       />
       <div className={`app-shell transition-all duration-200 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-[68px]'}`}>
-        <Header title={meta.title} crumb={meta.crumb} />
+        <Header title={meta.title} crumb={meta.crumb} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <AnimatePresence mode="wait">
           <motion.main
             key={pathname}

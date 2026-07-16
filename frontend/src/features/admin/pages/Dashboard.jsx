@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   const { user } = useSelector((state) => state.auth);
 
   const userName = user?.name || "Admin";
-  const pharmacy = user?.pharmacyId?.name || "Crescent Care Pharmacy";
+  const pharmacy = (user?.pharmacyName || "Admin Dashboard").replace(/crescent\s*/gi, "");
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";

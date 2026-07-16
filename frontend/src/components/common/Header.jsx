@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon, Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '../../hooks/useTheme';
 import { initials } from '../../utils/helpers';
 
-export default function Header({ title, crumb }) {
+export default function Header({ title, crumb, onMenuClick }) {
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
   const { user } = useSelector((state) => state.auth);
@@ -18,6 +18,15 @@ export default function Header({ title, crumb }) {
 
   return (
     <header className="app-header sticky top-0 z-20 flex h-16 items-center gap-3 px-4 sm:px-6 bg-surface/80 backdrop-blur-lg border-b border-outline-variant/80">
+      {onMenuClick && (
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden btn-ghost p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container shrink-0 cursor-pointer"
+          aria-label="Toggle sidebar"
+        >
+          <Menu size={20} />
+        </button>
+      )}
       {/* Title area */}
       <div className="flex-1 min-w-0">
         {crumb && (
@@ -34,11 +43,6 @@ export default function Header({ title, crumb }) {
           title={mode === 'dark' ? 'Switch to light' : 'Switch to dark'}
         >
           {mode === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
-
-        <button className="relative btn-ghost p-2 rounded-xl hidden sm:inline-flex" title="Notifications">
-          <Bell size={17} />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-error ring-2 ring-surface" />
         </button>
 
         <button

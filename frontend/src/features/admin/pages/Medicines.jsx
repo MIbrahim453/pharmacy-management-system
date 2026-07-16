@@ -240,7 +240,7 @@ export default function Medicines() {
           </div>
         </div>
 
-        <Table wrapperClassName="overflow-x-hidden">
+        <Table>
           <thead>
             <tr>
               <Th>Medicine</Th>

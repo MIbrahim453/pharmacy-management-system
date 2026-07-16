@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { checkAuth } from './store/authSlice';
+import { checkAuth, fetchMe } from './store/authSlice';
 import { Toaster } from 'sonner';
 
 // Route Protection Components
@@ -46,6 +46,9 @@ function App() {
 
   useEffect(() => {
     dispatch(checkAuth());
+    if (localStorage.getItem("accessToken")) {
+      dispatch(fetchMe());
+    }
   }, [dispatch]);
 
   return (

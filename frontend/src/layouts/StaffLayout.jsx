@@ -41,7 +41,7 @@ export default function StaffLayout({ children }) {
         onLogout={handleLogout}
       />
       <div className={`app-shell transition-all duration-200 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-[68px]'}`}>
-        <Header title={meta.title} crumb={meta.crumb} />
+        <Header title={meta.title} crumb={meta.crumb} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <AnimatePresence mode="wait">
           <motion.main
             key={pathname}

@@ -25,7 +25,7 @@ export const loginUser = createAsyncThunk(
         email: userWithRole.email,
         role: frontendRole,
         pharmacyId: userWithRole.pharmacyId?._id || userWithRole.pharmacyId,
-        pharmacyName: userWithRole.pharmacyId?.pharmacy_name || "",
+        pharmacyName: userWithRole.pharmacyId?.pharmacyName || userWithRole.pharmacyId?.pharmacy_name || "",
         staffRole: userWithRole.staffRole,
       };
 
@@ -77,7 +77,7 @@ export const updateProfile = createAsyncThunk(
         ...currentUser,
         name: updatedUser.name,
         email: updatedUser.email,
-        pharmacyName: updatedUser.pharmacyId?.pharmacy_name || currentUser.pharmacyName || "",
+        pharmacyName: updatedUser.pharmacyId?.pharmacyName || updatedUser.pharmacyId?.pharmacy_name || currentUser.pharmacyName || "",
       };
 
       // Store updated user details in localStorage
@@ -89,6 +89,50 @@ export const updateProfile = createAsyncThunk(
         error.response?.data?.message ||
         error.message ||
         "Failed to update profile";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+// Async thunk for fetching current user profile (getMe)
+export const fetchMe = createAsyncThunk(
+  "auth/fetchMe",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/auth/me");
+      const userWithRole = response.data.data;
+
+      const frontendRole =
+        userWithRole.role?.name === "super_admin"
+          ? "super"
+          : userWithRole.role?.name || userWithRole.role;
+
+      const userStr = localStorage.getItem("user");
+      let currentUser = {};
+      if (userStr) {
+        currentUser = JSON.parse(userStr);
+      }
+
+      const userData = {
+        ...currentUser,
+        id: userWithRole._id,
+        name: userWithRole.name,
+        email: userWithRole.email,
+        role: frontendRole,
+        pharmacyId: userWithRole.pharmacyId?._id || userWithRole.pharmacyId,
+        pharmacyName: userWithRole.pharmacyId?.pharmacyName || userWithRole.pharmacyId?.pharmacy_name || "",
+        staffRole: userWithRole.staffRole,
+      };
+
+      // Store user details in localStorage
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      return userData;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch user profile";
       return rejectWithValue(message);
     }
   }
@@ -159,6 +203,17 @@ const authSlice = createSlice({
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      // Fetch Me
+      .addCase(fetchMe.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchMe.rejected, (state, action) => {
         state.error = action.payload;
       });
   },

@@ -723,7 +723,7 @@ export default function Invoices() {
                       marginTop: 4,
                     }}
                   >
-                    Crescent Care Branch · Lahore, Pakistan
+                    {(user?.pharmacyName || "Pharmacy OS").replace(/crescent\s*/gi, "")} · Lahore, Pakistan
                   </div>
                   <div
                     style={{
