@@ -188,7 +188,6 @@ export default function Profile() {
   // Only add Pharmacy if user is NOT super admin
   if (reduxUser?.role !== 'super') {
     profileDetails.push(['Pharmacy', pharmacy?.pharmacy_name || reduxUser?.pharmacyName || 'N/A']);
-    profileDetails.push(['Total Staff', pharmacy?.totalStaff ?? 0]);
   }
   profileDetails.push(['Role', formatRole(reduxUser?.role)]);
   profileDetails.push(['Status', 'Active']);

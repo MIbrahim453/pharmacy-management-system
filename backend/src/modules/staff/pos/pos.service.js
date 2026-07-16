@@ -9,6 +9,7 @@ import logger from "../../../utils/logger.js";
 import mongoose from "mongoose";
 import { generateUniqueNumber } from "../../../utils/helper.js";
 import InvoiceBatchAllocation from "../../../database/models/invoiceBatchAllocation.model.js";
+import Payment from "../../../database/models/payment.model.js"
 
 const getMedicines = async (userId, filters = {}) => {
   const {

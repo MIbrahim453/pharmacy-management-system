@@ -163,7 +163,7 @@ const getSignUpTrend = async (period) => {
 
     case "monthly":
       startDate = new Date(now.getFullYear(), 0, 1);
-
+      
       pipeline = [
         {
           $match: {
@@ -232,7 +232,7 @@ const getSignUpTrend = async (period) => {
       break;
 
     default:
-      throw new Error("Invalid period");
+      throw new BadRequestError("Invalid period");
   }
 
   const signUpTrend = await User.aggregate(pipeline);

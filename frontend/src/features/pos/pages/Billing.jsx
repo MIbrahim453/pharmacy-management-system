@@ -126,8 +126,12 @@ export default function Billing() {
   };
 
   const checkout = async () => {
-    if (!customerName.trim() || !customerMobile.trim()) {
-      toast.error('Enter customer name and mobile number to checkout');
+    if (!customerName.trim()) {
+      toast.error('Customer name is required');
+      return;
+    }
+    if (!customerMobile.trim()) {
+      toast.error('Customer mobile number is required');
       return;
     }
     if (entries.length === 0) {
