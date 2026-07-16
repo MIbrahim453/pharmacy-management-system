@@ -44,6 +44,12 @@ const config = {
       pass: process.env.EMAIL_PASS,
     },
   },
+
+  // Cron
+  cron: {
+    cronExpression: process.env.EXPIRY_CHECK_CRON || "0 0 * * *",
+    cronTimezone: process.env.CRON_TIMEZONE,
+  },
 };
 
 const validateConfig = () => {
@@ -68,6 +74,6 @@ const validateConfig = () => {
   }
 };
 
-validateConfig()
+validateConfig();
 
-export { config }
+export { config };

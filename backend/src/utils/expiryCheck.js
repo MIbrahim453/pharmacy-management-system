@@ -1,28 +1,28 @@
 import MedicineBatch from "../database/models/medicineBatch.model.js";
-import Medicine from "../database/models/medicine.model.js";
-import { syncMedicineStockAndExpiry } from "./sync.js";
 import User from "../database/models/user.model.js";
+import { syncMedicineStockAndExpiry } from "./sync.js";
 
 export const checkAndExpireBatches = async (userId = null) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  let medicineIdFilter = {};
-  if (userId) {
-    const user = await User.findById(userId);
-    const pharmacyId = user?.pharmacyId;
-    if (!pharmacyId) return;
-
-    const userMedicines = await Medicine.find({ pharmacyId }).select("_id");
-    if (!userMedicines.length) return;
-
-    medicineIdFilter = { medicineId: { $in: userMedicines.map((medicine) => medicine._id) } };
-  }
-
-  const expiredBatches = await MedicineBatch.find({
-    ...medicineIdFilter,
+  const batchFilter = {
     expiryDate: { $lte: today },
     status: "active",
-  });
+  };
+
+  if (userId) {
+    const user = await User.findById(userId).select("pharmacyId");
+
+    if (!user?.pharmacyId) {
+      return;
+    }
+
+    batchFilter.pharmacyId = user.pharmacyId;
+  }
+
+  const expiredBatches =
+    await MedicineBatch.find(batchFilter).select("_id medicineId");
 
   if (expiredBatches.length === 0) {
     return;
@@ -30,19 +30,24 @@ export const checkAndExpireBatches = async (userId = null) => {
 
   await MedicineBatch.updateMany(
     {
-      ...medicineIdFilter,
-      _id: { $in: expiredBatches.map((b) => b._id) },
+      _id: {
+        $in: expiredBatches.map((batch) => batch._id),
+      },
     },
     {
-      $set: { status: "expired" },
-    }
+      $set: {
+        status: "expired",
+      },
+    },
   );
 
-  const affectedMedicineIds = Array.from(
-    new Set(expiredBatches.map((b) => b.medicineId.toString()))
-  );
+  const affectedMedicineIds = [
+    ...new Set(expiredBatches.map((batch) => batch.medicineId.toString())),
+  ];
 
-  for (const id of affectedMedicineIds) {
-    await syncMedicineStockAndExpiry(id, null, userId);
-  }
+  await Promise.all(
+    affectedMedicineIds.map((medicineId) =>
+      syncMedicineStockAndExpiry(medicineId, null, userId),
+    ),
+  );
 };

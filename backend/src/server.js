@@ -1,10 +1,14 @@
 import app from "./app.js";
-import { connectDB } from "./config/db.js";
+import { connectDB, disconnectDB } from "./config/db.js";
 import { config } from "./config/index.js";
 import dns from "dns";
 import logger from "./utils/logger.js";
 import seedRoles from "./database/seed/role.seed.js";
-import seedCategories from "./database/seed/category.seed.js"
+import seedCategories from "./database/seed/category.seed.js";
+import {
+  startExpiryCheckJob,
+  stopExpiryCheckJob,
+} from "./jobs/expiryCheck.job.js";
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
@@ -12,10 +16,12 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("Database connected to server");
-    await seedRoles()
-    await seedCategories()
+    await seedRoles();
+    await seedCategories();
+    startExpiryCheckJob();
+
     const server = app.listen(config.port, () => {
-       logger.info(`Server running on port ${config.port}`);
+      logger.info(`Server running on port ${config.port}`);
     });
 
     let isShuttingDown = false;
@@ -25,6 +31,8 @@ const startServer = async () => {
 
       isShuttingDown = true;
       console.log(`${signal} received. Shutting down gracefully`);
+      stopExpiryCheckJob();
+
       const forceShutdown = setTimeout(async () => {
         logger.info("Forcefully shutting down the server");
         await disconnectDB();
