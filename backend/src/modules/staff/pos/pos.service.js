@@ -222,20 +222,6 @@ const createInvoice = async (userId, data) => {
       );
     }
   }
-   const payment = await Payment.create(
-    [
-      {
-        invoiceId: createdInvoice[0]._id,
-        pharmacyId: user.pharmacyId,
-        amount: createdInvoice[0].grandTotal,
-        type: "inflow",
-        paymentGateway: createdInvoice[0].paymentMethod,
-        status: "pending",
-        performedBy: user._id,
-      },
-    ],
-    { session },
-  );
 
   await session.commitTransaction();
   

@@ -1,4 +1,3 @@
-import Pharmacy from "../../../database/models/pharmacy.model.js";
 import Medicine from "../../../database/models/medicine.model.js";
 import User from "../../../database/models/user.model.js";
 import Invoice from "../../../database/models/invoice.model.js";
@@ -9,8 +8,6 @@ import { BadRequestError } from "../../../utils/errors.js";
 import mongoose from "mongoose";
 import { syncMedicineStockAndExpiry } from "../../../utils/sync.js";
 import Payment from "../../../database/models/payment.model.js";
-import Transaction from "../../../database/models/transaction.model.js";
-import { generateUniqueNumber } from "../../../utils/helper.js";
 
 const editInvoice = async (userId, id, data) => {
   const session = await mongoose.startSession();
@@ -253,27 +250,7 @@ const markPaid = async (userId, invoiceId) => {
     { session },
   );
 
-  const transactionNumber = generateUniqueNumber("TRAN");
-
-  const transaction = await Transaction.create(
-    [
-      {
-        transactionNumber,
-        pharmacyId: user.pharmacyId,
-        paymentId: payment[0]._id,
-        relatedTo: "Invoice",
-        paymentMethod: invoice.paymentMethod,
-        amount: invoice.grandTotal,
-        type: "inflow",
-        status: "success",
-        note: `Payment received for invoice ${invoice.invoiceNumber}`,
-        performedBy: user._id,
-      },
-    ],
-    { session },
-  );
-
-  await session.commitTransaction()
+  await session.commitTransaction();
 
   const populatedInvoice = await Invoice.findById(invoice._id)
     .populate("pharmacyId", "pharmacy_name address phone")
@@ -288,16 +265,11 @@ const markPaid = async (userId, invoiceId) => {
     "name staffCounter",
   );
 
-  const populatedTransaction = await Transaction.findById(
-    transaction[0]?._id
-  ).populate("performedBy", "name staffCounter");
-
   logger.info(`Invoice Marked as Paid: ${invoice.invoiceNumber}`);
 
   return {
     invoice: populatedInvoice,
     payment: populatedPayment,
-    transaction: populatedTransaction,
   };
 };
 
@@ -348,3 +320,4 @@ const downloadInvoice = async (userId, invoiceId) => {
 };
 
 export { editInvoice, getAllInvoices, markPaid, viewInvoice, downloadInvoice };
+

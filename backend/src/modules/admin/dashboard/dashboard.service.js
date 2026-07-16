@@ -16,13 +16,16 @@ const dashboardStats = async (userId) => {
     pharmacyId: user.pharmacyId,
   }).populate("category", "name");
 
-  const today = new Date();
-  const startDate = today.setHours(0, 0, 0, 0);
-  const endDate = today.setHours(23, 59, 59, 999);
+  const startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(startDate);
+  endDate.setHours(23, 59, 59, 999);
 
   const totalInvoices = await Invoice.countDocuments({
     pharmacyId: user.pharmacyId,
     paymentStatus: "Paid",
+    purchaseId: null,
     invoiceType: "receivable",
     createdAt: { $gte: startDate, $lte: endDate },
   });
@@ -32,6 +35,7 @@ const dashboardStats = async (userId) => {
       $match: {
         pharmacyId: user.pharmacyId,
         paymentStatus: "Paid",
+        purchaseId: null,
         invoiceType: "receivable",
         createdAt: { $gte: startDate, $lte: endDate },
       },
@@ -54,6 +58,7 @@ const dashboardStats = async (userId) => {
       $match: {
         pharmacyId: user.pharmacyId,
         paymentStatus: "Paid",
+        purchaseId: null,
         invoiceType: "receivable",
         createdAt: { $gte: startDate, $lte: endDate },
       },
@@ -70,6 +75,7 @@ const dashboardStats = async (userId) => {
 
   const pendingPaymentsToday = await Invoice.find({
     paymentStatus: "Unpaid",
+    purchaseId: null,
     pharmacyId: user.pharmacyId,
     invoiceType: "receivable",
     createdAt: { $gte: startDate, $lte: endDate },
@@ -90,7 +96,7 @@ const dashboardStats = async (userId) => {
   const medBatchExpirySoon = await MedicineBatch.countDocuments({
     pharmacyId: user.pharmacyId,
     expiryDate: {
-      $lt: new Date(Date.now() + 30),
+      $lt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
     status: "active",
   });
@@ -128,6 +134,7 @@ const revenueTrends = async (userId, period) => {
             invoiceType: "receivable",
             pharmacyId: user.pharmacyId,
             paymentStatus: "Paid",
+            purchaseId: null,
             createdAt: { $gte: startDate },
           },
         },
@@ -160,6 +167,7 @@ const revenueTrends = async (userId, period) => {
             invoiceType: "receivable",
             pharmacyId: user.pharmacyId,
             paymentStatus: "Paid",
+            purchaseId: null,
             createdAt: { $gte: startDate },
           },
         },
@@ -223,6 +231,7 @@ const revenueTrends = async (userId, period) => {
             invoiceType: "receivable",
             pharmacyId: user.pharmacyId,
             paymentStatus: "Paid",
+            purchaseId: null,
             createdAt: { $gte: startDate },
           },
         },
@@ -265,6 +274,7 @@ const revenueTrends = async (userId, period) => {
             invoiceType: "receivable",
             pharmacyId: user.pharmacyId,
             paymentStatus: "Paid",
+            purchaseId: null,
             createdAt: { $gte: startDate },
           },
         },
@@ -322,6 +332,7 @@ const topSellingMedicines = async (userId) => {
       $match: {
         pharmacyId: user.pharmacyId,
         paymentStatus: "Paid",
+        purchaseId: null,
         invoiceType: "receivable",
       },
     },

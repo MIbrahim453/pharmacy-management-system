@@ -10,7 +10,6 @@ import Invoice from "../../../database/models/invoice.model.js";
 import { generateUniqueNumber } from "../../../utils/helper.js";
 import Supplier from "../../../database/models/supplier.model.js";
 import Payment from "../../../database/models/payment.model.js";
-import Transaction from "../../../database/models/transaction.model.js";
 
 const createPurchase = async (userId, data) => {
   const user = await User.findById(userId);
@@ -169,19 +168,6 @@ const createPurchase = async (userId, data) => {
     performedBy: user._id,
   });
 
-  const transactionNumber = generateUniqueNumber("TRAN");
-  const transaction = await Transaction.create({
-    transactionNumber,
-    pharmacyId: user.pharmacyId,
-    paymentId: payment._id,
-    amount: totalAmount,
-    type: "outflow",
-    relatedTo: "Purchase",
-    paymentMethod: data.paymentMethod,
-    status: "success",
-    performedBy: user._id,
-    note: `Payment Completed for Invoice ${invoiceNumberForInvoice}`,
-  });
 
   const populatedPurchase = await Purchase.findById(purchase._id)
     .populate("supplierId", "name contact phone")
@@ -288,3 +274,4 @@ const viewPurchase = async (userId, id) => {
 };
 
 export { createPurchase, getPurchases, viewPurchase };
+
