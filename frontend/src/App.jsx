@@ -33,7 +33,6 @@ import Inventory from './features/admin/pages/Inventory';
 import Purchases from './features/admin/pages/Purchases';
 import Invoices from './features/admin/pages/Invoices';
 import Payments from './features/admin/pages/Payments';
-import Reports from './features/admin/pages/Reports';
 
 // POS
 import Billing from './features/pos/pages/Billing';
@@ -71,7 +70,6 @@ function App() {
       <Route path="/admin/purchases" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Purchases /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Invoices /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Payments /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
       <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><Profile /></AdminLayout></ProtectedRoute>} />
 
       {/* Staff Routes */}

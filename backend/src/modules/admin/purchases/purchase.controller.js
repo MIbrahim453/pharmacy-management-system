@@ -7,8 +7,13 @@ import { sendSuccess, sendCreated } from "../../../utils/response.js";
 
 const purchaseCreate = async (req, res, next) => {
   try {
-    const result = await createPurchase(req.user.id, req.body);
-    return sendCreated(res, result, "Purchase Created and Inventory Updated Successfully");
+    const userId = req.user?.id;
+    const result = await createPurchase(userId, req.body);
+    return sendCreated(
+      res,
+      result,
+      "Purchase Created and Inventory Updated Successfully",
+    );
   } catch (error) {
     next(error);
   }

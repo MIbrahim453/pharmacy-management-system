@@ -108,7 +108,7 @@ const createPurchase = async (userId, data) => {
     createdBy: userId,
   });
 
-  purchase.invoiceNumber = invoice._id
+  purchase.invoiceId = invoice._id
   await purchase.save();
 
   for (const item of processedItems) {
@@ -186,6 +186,7 @@ const createPurchase = async (userId, data) => {
   const populatedPurchase = await Purchase.findById(purchase._id)
     .populate("supplierId", "name contact phone")
     .populate("createdBy", "name email")
+    .populate("invoiceId", "invoiceNumber" )
     .populate(
       "items.medicineId",
       "name brand genericName manufacturer saleUnit sellingPrice",
@@ -251,6 +252,7 @@ const getPurchases = async (userId, filters = {}) => {
     .limit(Number(limit))
     .sort({ purchaseDate: sortDirection })
     .populate("supplierId", "name contact phone")
+    .populate("invoiceId", "invoiceNumber")
     .populate("createdBy", "name email");
 
   logger.info("Purchases Fetched Successfully");
@@ -270,6 +272,7 @@ const viewPurchase = async (userId, id) => {
   })
     .populate("supplierId", "name contact phone")
     .populate("createdBy", "name email")
+    .populate("invoiceId", "invoiceNumber")
     .populate(
       "items.medicineId",
       "name brand category genericName manufacturer saleUnit sellingPrice",

@@ -202,7 +202,6 @@ export const staffEditSchema = staffRegisterSchema;
 
 export const purchaseCreateSchema = yup.object().shape({
   supplierId: yup.string().required("Supplier is required"),
-  invoiceNumber: yup.string().optional(),
   purchaseDate: yup
     .date()
     .typeError("Please enter a valid purchase date")

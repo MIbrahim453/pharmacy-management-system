@@ -1,23 +1,5 @@
 import mongoose from "mongoose";
 
-const conversionStepSchema = new mongoose.Schema({
-  from: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  to: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  factor: {
-    type: Number,
-    required: true,
-    min: 1,
-  },
-}, { _id: false });
-
 const purchaseItemSchema = new mongoose.Schema({
   medicineId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -44,7 +26,16 @@ const purchaseItemSchema = new mongoose.Schema({
     min: 1,
   },
   packaging: {
-    type: [conversionStepSchema],
+    type: [
+      new mongoose.Schema(
+        {
+          from: { type: String, required: true, trim: true },
+          to: { type: String, required: true, trim: true },
+          factor: { type: Number, required: true, min: 1 },
+        },
+        { _id: false },
+      ),
+    ],
     default: [],
   },
   calculatedQty: {
@@ -86,10 +77,10 @@ const purchaseSchema = new mongoose.Schema(
       ref: "Supplier",
       required: true,
     },
-    invoiceNumber: {
+    invoiceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Invoice",
-      required: true,
+      default: null,
     },
     purchaseDate: {
       type: Date,
@@ -116,7 +107,7 @@ const purchaseSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Purchase = mongoose.model("Purchase", purchaseSchema);

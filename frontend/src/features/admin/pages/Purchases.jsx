@@ -51,7 +51,6 @@ export default function Purchases() {
     resolver: yupResolver(purchaseCreateSchema),
     defaultValues: {
       supplierId: '',
-      invoiceNumber: '',
       purchaseDate: new Date().toISOString().split('T')[0],
       paymentMethod: 'Cash',
       notes: '',
@@ -149,7 +148,6 @@ export default function Purchases() {
     setExpandedPackaging({});
     resetPurchase({
       supplierId: suppliers[0]?.id || '',
-      invoiceNumber: '',
       purchaseDate: new Date().toISOString().split('T')[0],
       paymentMethod: 'Cash',
       notes: '',
@@ -293,9 +291,9 @@ export default function Purchases() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.04 }}
                 >
-                  <Td className="font-semibold text-primary">{p.purchaseNumber}</Td>
-                  <Td>{p.supplierId?.name || '—'}</Td>
-                  <Td>{p.invoiceNumber || '—'}</Td>
+                  <Td className="font-mono text-xs font-semibold text-primary">{p.purchaseNumber}</Td>
+                  <Td className="text-sm font-medium">{p.supplierId?.name || '—'}</Td>
+                  <Td>{p.invoiceId?.invoiceNumber || '—'}</Td>
                   <Td className="text-sm text-on-surface-variant">
                     {new Date(p.purchaseDate).toLocaleDateString('en-US', {
                       day: 'numeric',
@@ -350,19 +348,13 @@ export default function Purchases() {
         }
       >
         <form id="purchase-form" onSubmit={handleSubmit(handleAddPurchase)} className="p-6 space-y-5">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Select
               label="Supplier"
               {...register('supplierId')}
               options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
               error={errors.supplierId?.message}
               required
-            />
-            <Input
-              label="Invoice Number"
-              {...register('invoiceNumber')}
-              placeholder="e.g. INV-9921"
-              error={errors.invoiceNumber?.message}
             />
             <Input
               label="Purchase Date"
@@ -632,7 +624,7 @@ export default function Purchases() {
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-on-surface-variant flex items-center gap-1"><FileText size={13} /> Invoice #</span>
-                <span className="font-semibold text-on-surface">{selected.invoiceNumber || '—'}</span>
+                <span className="font-semibold text-on-surface">{selected.invoiceId?.invoiceNumber || '—'}</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-on-surface-variant flex items-center gap-1"><Calendar size={13} /> Date</span>

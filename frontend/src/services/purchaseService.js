@@ -6,7 +6,6 @@ import api from "./axios";
 export const createPurchase = async (purchaseData) => {
   const payload = {
     supplierId: purchaseData.supplierId,
-    invoiceNumber: purchaseData.invoiceNumber || "",
     purchaseDate: purchaseData.purchaseDate,
     notes: purchaseData.notes || "",
     paymentMethod: purchaseData.paymentMethod || "Cash",
