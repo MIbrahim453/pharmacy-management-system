@@ -87,8 +87,9 @@ const purchaseSchema = new mongoose.Schema(
       required: true,
     },
     invoiceNumber: {
-      type: String,
-      default: "",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Invoice",
+      required: true,
     },
     purchaseDate: {
       type: Date,

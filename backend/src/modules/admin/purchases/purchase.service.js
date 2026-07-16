@@ -68,12 +68,10 @@ const createPurchase = async (userId, data) => {
       location: item.location || "",
     });
   }
-
   const purchase = await Purchase.create({
     purchaseNumber,
     pharmacyId: user.pharmacyId,
     supplierId,
-    invoiceNumber: invoiceNumber || "",
     purchaseDate,
     items: processedItems,
     notes: notes || "",
@@ -81,6 +79,37 @@ const createPurchase = async (userId, data) => {
     status: "received",
     createdBy: userId,
   });
+
+  const invoiceItems = processedItems.map((item) => ({
+    medicineId: item.medicineId,
+    medicineName: item.medicineName,
+    quantity: item.calculatedQty,
+    unitPrice: item.costPrice,
+    total: item.calculatedQty * item.costPrice,
+  }));
+
+  const invoiceNumberForInvoice = invoiceNumber || purchaseNumber;
+
+  const invoice = await Invoice.create({
+    invoiceNumber: invoiceNumberForInvoice,
+    pharmacyId: user.pharmacyId,
+    supplierId,
+    purchaseId: purchase._id,
+    invoiceType: "payable",
+    customerName: `${supplier.name} - ${supplier.contact} Supplier`,
+    customerPhone: supplier.phone,
+    items: invoiceItems,
+    subTotal: totalAmount,
+    grandTotal: totalAmount,
+    discount: 0,
+    tax: 0,
+    paymentStatus: "Paid",
+    paymentMethod: data.paymentMethod,
+    createdBy: userId,
+  });
+
+  purchase.invoiceNumber = invoice._id
+  await purchase.save();
 
   for (const item of processedItems) {
     const existingBatch = await MedicineBatch.findOne({
@@ -129,34 +158,6 @@ const createPurchase = async (userId, data) => {
   for (const medicineId of uniqueMedicineIds) {
     await syncMedicineStockAndExpiry(medicineId, null, userId);
   }
-
-  const invoiceItems = processedItems.map((item) => ({
-    medicineId: item.medicineId,
-    medicineName: item.medicineName,
-    quantity: item.calculatedQty,
-    unitPrice: item.costPrice,
-    total: item.calculatedQty * item.costPrice,
-  }));
-
-  const invoiceNumberForInvoice = invoiceNumber || purchaseNumber;
-
-  const invoice = await Invoice.create({
-    invoiceNumber: invoiceNumberForInvoice,
-    pharmacyId: user.pharmacyId,
-    supplierId,
-    purchaseId: purchase._id,
-    invoiceType: "payable",
-    customerName: `${supplier.name} - ${supplier.contact} Supplier`,
-    customerPhone: supplier.phone,
-    items: invoiceItems,
-    subTotal: totalAmount,
-    grandTotal: totalAmount,
-    discount: 0,
-    tax: 0,
-    paymentStatus: "Paid",
-    paymentMethod: data.paymentMethod,
-    createdBy: userId,
-  });
 
   const payment = await Payment.create({
     pharmacyId: user.pharmacyId,

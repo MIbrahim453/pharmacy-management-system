@@ -9,12 +9,23 @@ const getInventoryStats = async (userId) => {
   const user = await User.findById(userId);
   const pharmacyId = user?.pharmacyId;
 
-  const userMedicineIds = pharmacyId ? await Medicine.find({ pharmacyId }).select("_id") : [];
+  const userMedicineIds = pharmacyId
+    ? await Medicine.find({ pharmacyId }).select("_id")
+    : [];
   const scopedMedicineIds = userMedicineIds.map((medicine) => medicine._id);
 
-  const medInStock = await Medicine.countDocuments({ status: "inStock", pharmacyId });
-  const medLowStock = await Medicine.countDocuments({ status: "lowStock", pharmacyId });
-  const medCritical = await Medicine.countDocuments({ status: "critical", pharmacyId });
+  const medInStock = await Medicine.countDocuments({
+    status: "inStock",
+    pharmacyId,
+  });
+  const medLowStock = await Medicine.countDocuments({
+    status: "lowStock",
+    pharmacyId,
+  });
+  const medCritical = await Medicine.countDocuments({
+    status: "critical",
+    pharmacyId,
+  });
 
   const belowReorderMedicines = await Medicine.countDocuments({
     pharmacyId,
@@ -27,7 +38,10 @@ const getInventoryStats = async (userId) => {
   const today = new Date();
   const next30Days = new Date(today.getDate() + 30);
 
-  const inventoryQuery = scopedMedicineIds.length > 0 ? { medicineId: { $in: scopedMedicineIds } } : { medicineId: { $in: [] } };
+  const inventoryQuery =
+    scopedMedicineIds.length > 0
+      ? { medicineId: { $in: scopedMedicineIds } }
+      : { medicineId: { $in: [] } };
 
   const expiringIn30Days = await MedicineBatch.countDocuments({
     ...inventoryQuery,
@@ -100,7 +114,9 @@ const getInventory = async (userId) => {
 
   const user = await User.findById(userId);
   const pharmacyId = user?.pharmacyId;
-  const userMedicineIds = pharmacyId ? await Medicine.find({ pharmacyId }).select("_id") : [];
+  const userMedicineIds = pharmacyId
+    ? await Medicine.find({ pharmacyId }).select("_id")
+    : [];
   const scopedMedicalIds = userMedicineIds.map((medicine) => medicine._id);
 
   const expiringSoonBatches = await MedicineBatch.find({
@@ -117,7 +133,10 @@ const getInventory = async (userId) => {
     _id: { $in: expiringSoonMedIds },
   });
 
-  const expiredBatches = await MedicineBatch.find({ medicineId: { $in: scopedMedicalIds }, status: "expired" });
+  const expiredBatches = await MedicineBatch.find({
+    medicineId: { $in: scopedMedicalIds },
+    status: "expired",
+  });
 
   const expiredMedIds = Array.from(
     new Set(expiredBatches.map((b) => b.medicineId.toString())),
