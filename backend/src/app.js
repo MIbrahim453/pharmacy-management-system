@@ -10,7 +10,7 @@ import { initializePassport } from './config/passport.js'
 const app = express()
 
 app.use(cors({
-    origin: config.nodeEnv === 'production' ? "your_frontend_url" : "http://localhost:5173",
+    origin: config.nodeEnv === 'production' ? config.frontendUrl : "http://localhost:5173",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
