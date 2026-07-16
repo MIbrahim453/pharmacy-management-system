@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { User as UserIcon, Mail, Lock, Save, Camera, Percent, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Save, Percent, ShieldAlert, AlertTriangle } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
@@ -68,7 +68,7 @@ export default function Profile() {
     formState: { errors: detailsErrors },
   } = useForm({
     resolver: yupResolver(pharmacyDetailsSchema),
-    defaultValues: { pharmacyEmail: '', phone: '', address: '' },
+    defaultValues: { pharmacyEmail: '', phone: '', address: '', totalStaff: '' },
   });
 
   // Sync state from redux on load
@@ -96,6 +96,7 @@ export default function Profile() {
             pharmacyEmail: userData.pharmacyId.pharmacyEmail ?? '',
             phone: userData.pharmacyId.phone ?? '',
             address: userData.pharmacyId.address ?? '',
+            totalStaff: userData.pharmacyId.totalStaff !== undefined ? String(userData.pharmacyId.totalStaff) : '',
           });
         }
       } catch (error) {
@@ -166,6 +167,7 @@ export default function Profile() {
         pharmacyEmail: data.pharmacyEmail,
         phone: data.phone,
         address: data.address,
+        totalStaff: data.totalStaff !== undefined && data.totalStaff !== '' ? Number(data.totalStaff) : null,
       });
       toast.success('Pharmacy details updated successfully');
       setPharmacy(response.data?.data);
@@ -204,9 +206,6 @@ export default function Profile() {
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/[0.12] text-2xl font-bold text-primary">
                 {initials(reduxUser?.name || 'User')}
               </div>
-              <button className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-xl bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm">
-                <Camera size={13} />
-              </button>
             </div>
             <div className="mt-4">
               <div className="text-base font-bold text-on-surface">{reduxUser?.name || 'User'}</div>
@@ -271,12 +270,20 @@ export default function Profile() {
                       error={detailsErrors.phone?.message}
                     />
                   </div>
-                  <Input
-                    label="Pharmacy Address"
-                    type="text"
-                    {...registerDetails('address')}
-                    error={detailsErrors.address?.message}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Pharmacy Address"
+                      type="text"
+                      {...registerDetails('address')}
+                      error={detailsErrors.address?.message}
+                    />
+                    <Input
+                      label="Total Staff Count (Optional)"
+                      type="number"
+                      {...registerDetails('totalStaff')}
+                      error={detailsErrors.totalStaff?.message}
+                    />
+                  </div>
                   <div className="flex justify-end">
                     <Button type="submit" size="sm" loading={detailsSaving} icon={<Save size={15} />}>Save details</Button>
                   </div>

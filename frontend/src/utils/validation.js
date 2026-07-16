@@ -359,6 +359,12 @@ export const pharmacyDetailsSchema = yup.object().shape({
     .max(255, "Address cannot exceed 255 characters")
     .optional()
     .default(""),
+  totalStaff: yup
+    .number()
+    .typeError("Staff count must be a number")
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .nullable()
+    .optional(),
 });
 
 export default yupResolver;

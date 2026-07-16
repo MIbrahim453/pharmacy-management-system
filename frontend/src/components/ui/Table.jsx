@@ -1,6 +1,6 @@
-export function Table({ className, children }) {
+export function Table({ className, wrapperClassName = 'overflow-x-auto', children }) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className={`w-full ${wrapperClassName}`}>
       <table className={`data-table ${className || ''}`}>{children}</table>
     </div>
   );

@@ -240,10 +240,10 @@ export default function Medicines() {
           </div>
         </div>
 
-        <Table>
+        <Table wrapperClassName="overflow-x-hidden">
           <thead>
             <tr>
-              <Th>Medicine (Brand & Generic)</Th>
+              <Th>Medicine</Th>
               <Th>Category</Th>
               <Th>Manufacturer</Th>
               <Th>Sale Unit</Th>
@@ -270,10 +270,7 @@ export default function Medicines() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary text-xs font-bold">
                         {m.name.slice(0, 2).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-on-surface">{m.name}</div>
-                        <div className="text-xs text-on-surface-variant font-medium italic">{m.genericName}</div>
-                      </div>
+                      <span className="text-sm font-bold text-on-surface">{m.name}</span>
                     </div>
                   </Td>
                   <Td>
@@ -292,8 +289,8 @@ export default function Medicines() {
                     {m.stock.toLocaleString()} {m.saleUnit}s
                   </Td>
                   <Td className="text-sm text-on-surface-variant tnum">{m.expiry || '—'}</Td>
-                  <Td>
-                    <Badge status={m.status} dot />
+                  <Td className="whitespace-nowrap">
+                    <Badge status={m.status} dot className="whitespace-nowrap" />
                   </Td>
                   <Td>
                     <div className="flex items-center gap-1">
