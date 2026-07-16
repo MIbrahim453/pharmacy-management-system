@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { checkAuth } from './store/authSlice';
+import { Toaster } from 'sonner';
 
 // Route Protection Components
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -48,7 +49,9 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Routes>
+    <>
+      <Toaster richColors position="top-right" closeButton />
+      <Routes>
       {/* Auth / Public Routes */}
       <Route path="/login" element={<PublicRoute><AuthLayout><Login /></AuthLayout></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><AuthLayout><ForgotPassword /></AuthLayout></PublicRoute>} />
@@ -81,6 +84,7 @@ function App() {
       <Route path="/" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
       <Route path="*" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
     </Routes>
+    </>
   );
 }
 

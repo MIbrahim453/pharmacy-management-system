@@ -152,7 +152,7 @@ const createStaff = async (user, data) => {
   };
 };
 
-const generateToken = (user) => {
+const generateToken = (user, rememberMe) => {
   const accessToken = jwt.sign(
     {
       id: user._id,
@@ -168,18 +168,19 @@ const generateToken = (user) => {
       id: user._id,
       email: user.email,
       type: "refresh",
+      rememberMe: rememberMe ? true : false,
     },
     config.jwt.refreshSecret,
     {
-      expiresIn: config.jwt.refreshSecretExpiry,
+      expiresIn: rememberMe ? config.jwt.rememberMeExpiry : config.jwt.refreshSecretExpiry
     },
   );
 
   return { accessToken, refreshToken };
 };
 
-const login = async (user, req) => {
-  const token = generateToken(user);
+const login = async (user, rememberMe= false, req) => {
+  const token = generateToken(user, rememberMe);
 
   await loginHistory.create({
     user: user._id,
@@ -212,7 +213,7 @@ const refreshToken = async (refreshTokenValue) => {
   if (!user) {
     throw new UnauthorizedError("User Not Found");
   }
-  const token = generateToken(user);
+  const token = generateToken(user, payload.rememberMe);
 
   logger.info(`Token refreshed for user :${user.email}`);
 

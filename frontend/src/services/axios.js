@@ -26,7 +26,8 @@ api.interceptors.response.use(
   async (error) => {
     if (
       error.response &&
-      (error.response.status === 401 || error.response.status === 403)
+      (error.response.status === 401 || error.response.status === 403) &&
+      !error.config.url.includes('/auth/login')
     ) {
       try {
         const refreshToken = localStorage.getItem("refreshToken");

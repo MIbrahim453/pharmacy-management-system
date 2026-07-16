@@ -19,6 +19,7 @@ const registerStaffValidation = joi.object({
 const loginValidation = joi.object({
   email: joi.string().email().required(),
   password: joi.string().required(),
+  rememberMe: joi.boolean().optional(),
 });
 
 const forgotPasswordValidation = joi.object({

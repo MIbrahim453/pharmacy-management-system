@@ -37,12 +37,16 @@ export default function Login() {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '', password: '', rememberMe: true },
   });
 
   const onSubmit = async (data) => {
     dispatch(clearError());
-    const result = await dispatch(loginUser({ email: data.email, password: data.password }));
+    const result = await dispatch(loginUser({
+      email: data.email,
+      password: data.password,
+      rememberMe: data.rememberMe,
+    }));
 
     if (loginUser.fulfilled.match(result)) {
       const user = result.payload;
@@ -195,7 +199,12 @@ export default function Login() {
               </div>
 
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="remember" defaultChecked className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/40" />
+                <input
+                  type="checkbox"
+                  id="remember"
+                  {...register('rememberMe')}
+                  className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/40"
+                />
                 <label htmlFor="remember" className="text-sm text-on-surface-variant">Remember me</label>
               </div>
 

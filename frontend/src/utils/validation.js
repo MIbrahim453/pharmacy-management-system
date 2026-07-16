@@ -7,6 +7,7 @@ export const loginSchema = yup.object().shape({
     .email("Please enter a valid email address")
     .required("Email is required"),
   password: yup.string().required("Password is required"),
+  rememberMe: yup.boolean().optional(),
 });
 
 // Schema for Forgot Password form

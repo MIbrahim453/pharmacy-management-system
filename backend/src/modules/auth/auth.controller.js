@@ -32,7 +32,7 @@ const signUpStaff = async (req, res, next) => {
 
 const loginUsers = async (req, res, next) => {
   try {
-    const result = await login(req.user, req);
+    const result = await login(req.user, req.body.rememberMe, req);
     return sendSuccess(res, result, "User logged in successfully");
   } catch (error) {
     next(error);

@@ -1,21 +1,21 @@
 import { passport } from "../config/passport.js";
 import logger from "../utils/logger.js";
-import { UnauthorizedError } from "../utils/errors.js";
+import { sendError } from "../utils/response.js";
 
 const authenticateLocal = (req, res, next) => {
   passport.authenticate("local", { session: false }, (err, user, info) => {
     if (err) {
       logger.info("Local authentication error");
-      return next(err);
+      return sendError(res, err.message || "Authentication error", 401);
     }
     if (!user) {
-      const message = info.message || "Invalid credentials";
+      const message = info?.message || "Invalid credentials";
       logger.warn(`Authentication failed: ${message}`, {
         email: req.body.email,
         ip: req.ip,
         requestId: req.requestId,
       });
-      return next(new UnauthorizedError(message));
+      return sendError(res, message, 401);
     }
 
     req.user = user;
