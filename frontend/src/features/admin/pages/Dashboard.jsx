@@ -8,11 +8,20 @@ import PageHeader from "../../../components/common/PageHeader";
 import { Card, CardHeader, CardTitle, CardBody } from "../../../components/ui/Card";
 import { KPICard } from "../../../components/charts/DashboardStats";
 import RevenueChart from "../../../components/charts/RevenueChart";
+import { PieChart, Pie, Cell, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import Button from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
-import { Table, Th, Td } from "../../../components/ui/Table";
 import { formatPKR } from "../../../utils/helpers";
 import { getDashboardStats, getRevenueTrends, getTopSellingMedicines } from "../../../services/dashboardService";
+
+const COLORS = [
+  "var(--color-primary)",
+  "var(--color-tertiary)",
+  "var(--color-warning)",
+  "var(--color-error)",
+  "var(--color-secondary)",
+  "var(--color-outline)",
+];
 
 const REV_MAP = {
   Daily: "daily",
@@ -31,10 +40,10 @@ const REV_LABELS = {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  
+
   const userName = user?.name || "Admin";
   const pharmacy = user?.pharmacyId?.name || "Crescent Care Pharmacy";
-  
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -49,7 +58,7 @@ export default function AdminDashboard() {
     critical: 0,
     medBatchExpirySoon: 0,
   });
-  
+
   // Chart and lists state
   const [revF, setRevF] = useState("Weekly");
   const [trends, setTrends] = useState([]);
@@ -170,9 +179,9 @@ export default function AdminDashboard() {
         title={`${greeting}, ${userName?.split(" ")[0] ?? "there"}`}
         subtitle={`${pharmacy} — here's how the shop is doing today.`}
         actions={
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             icon={<RefreshCw size={14} className={loading ? "animate-spin" : ""} />}
             onClick={() => {
               fetchDashboardData();
@@ -199,9 +208,9 @@ export default function AdminDashboard() {
           <CardHeader action={
             <div className="flex rounded-xl border border-outline-variant overflow-hidden">
               {Object.keys(REV_MAP).map((f) => (
-                <button 
-                  key={f} 
-                  onClick={() => setRevF(f)} 
+                <button
+                  key={f}
+                  onClick={() => setRevF(f)}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${f === revF ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-container"}`}
                 >
                   {f}
@@ -222,20 +231,20 @@ export default function AdminDashboard() {
                 <p className="text-sm font-medium">No sales trends recorded for this period</p>
               </div>
             ) : (
-              <RevenueChart 
-                data={mappedChartData} 
-                series={[{ key: "revenue", name: "Revenue", fill: true }]} 
-                fmt={formatPKR} 
-                height={230} 
+              <RevenueChart
+                data={mappedChartData}
+                series={[{ key: "revenue", name: "Revenue", fill: true }]}
+                fmt={formatPKR}
+                height={230}
               />
             )}
           </CardBody>
         </Card>
 
-        <Card>
+        <Card className="xl:row-span-2 flex flex-col h-full">
           <CardHeader action={
-            <button 
-              onClick={() => navigate("/admin/inventory")} 
+            <button
+              onClick={() => navigate("/admin/inventory")}
               className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
             >
               View all <ArrowRight size={12} />
@@ -243,71 +252,118 @@ export default function AdminDashboard() {
           }>
             <CardTitle>Needs attention</CardTitle>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardBody className="space-y-4 flex-1 flex flex-col">
             {alertsList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant/60">
+              <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant/60 flex-1">
                 <CheckCircle size={32} className="text-success mb-2" />
                 <p className="text-sm font-medium">Inventory is in perfect health</p>
               </div>
             ) : (
-              alertsList.map((a, i) => (
-                <div key={i}>
-                  {i > 0 && <div className="h-px bg-surface-container-high -mx-5 mb-4" />}
-                  <div className="flex items-start gap-3 cursor-pointer" onClick={() => navigate(a.link)}>
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${a.tone === "danger" ? "bg-error/[0.08] text-error" : a.tone === "warning" ? "bg-warning/[0.08] text-warning" : "bg-tertiary/[0.08] text-tertiary"}`}>{a.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-on-surface">{a.title}</div>
-                      <div className="text-xs text-on-surface-variant mt-0.5">{a.sub}</div>
+              <div className="space-y-4 flex-1">
+                {alertsList.map((a, i) => (
+                  <div key={i}>
+                    {i > 0 && <div className="h-px bg-surface-container-high -mx-5 mb-4" />}
+                    <div className="flex items-start gap-3 cursor-pointer" onClick={() => navigate(a.link)}>
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${a.tone === "danger" ? "bg-error/[0.08] text-error" : a.tone === "warning" ? "bg-warning/[0.08] text-warning" : "bg-tertiary/[0.08] text-tertiary"}`}>{a.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-on-surface">{a.title}</div>
+                        <div className="text-xs text-on-surface-variant mt-0.5">{a.sub}</div>
+                      </div>
+                      <Badge status={a.status} />
                     </div>
-                    <Badge status={a.status} />
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </CardBody>
         </Card>
-      </div>
 
-      <div className="mb-5">
-        <Card>
+        <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>Top Selling Medicines</CardTitle>
           </CardHeader>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Medicine</Th>
-                <Th align="right">Invoices</Th>
-                <Th align="right">Units Sold</Th>
-                <Th align="right">Revenue</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {topSelling.length === 0 ? (
-                <tr>
-                  <Td colSpan={4} className="text-center py-10 text-on-surface-variant/70">
-                    No sales data recorded yet
-                  </Td>
-                </tr>
-              ) : (
-                topSelling.map((r) => (
-                  <tr key={r.medicineId}>
-                    <Td>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/[0.12] text-primary text-[10px] font-bold">
-                          {getAbbreviation(r.medicineName)}
+          <CardBody>
+            {topSelling.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-on-surface-variant/70">
+                No sales data recorded yet
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
+                <div className="md:col-span-2 flex justify-center relative min-h-[200px]">
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={topSelling.map((item, index) => ({
+                          name: item.medicineName,
+                          value: item.totalRevenue || 0,
+                          units: item.totalUnitsSold || 0,
+                          invoices: item.totalInvoices || 0,
+                          color: COLORS[index % COLORS.length]
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        dataKey="value"
+                        paddingAngle={3}
+                        strokeWidth={0}
+                      >
+                        {topSelling.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip
+                        contentStyle={{
+                          background: 'var(--color-surface-container-highest)',
+                          border: '1px solid var(--color-outline-variant)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: 'var(--color-on-surface)',
+                        }}
+                        formatter={(value) => [formatPKR(value), 'Revenue']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-on-surface-variant">Total Share</span>
+                    <span className="text-sm font-extrabold text-on-surface">
+                      {formatPKR(topSelling.reduce((acc, curr) => acc + (curr.totalRevenue || 0), 0))}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="md:col-span-3 space-y-2">
+                  {topSelling.map((entry, index) => {
+                    const totalRevenue = topSelling.reduce((acc, curr) => acc + (curr.totalRevenue || 0), 0);
+                    const percentage = totalRevenue > 0
+                      ? (((entry.totalRevenue || 0) / totalRevenue) * 100).toFixed(1)
+                      : 0;
+                    const color = COLORS[index % COLORS.length];
+                    return (
+                      <div key={entry.medicineId} className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-container transition-colors duration-150">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="h-3 w-3 shrink-0 rounded-full"
+                            style={{ backgroundColor: color }}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-on-surface truncate">{entry.medicineName}</div>
+                            <div className="text-xs text-on-surface-variant">
+                              {entry.totalUnitsSold} units · {entry.totalInvoices} invoices
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-sm font-semibold text-on-surface">{r.medicineName}</span>
+                        <div className="text-right shrink-0 pl-3">
+                          <div className="text-sm font-bold text-on-surface">{formatPKR(entry.totalRevenue)}</div>
+                          <div className="text-xs text-primary font-semibold">{percentage}%</div>
+                        </div>
                       </div>
-                    </Td>
-                    <Td align="right" className="text-sm font-medium">{r.totalInvoices}</Td>
-                    <Td align="right" className="text-sm font-medium text-primary font-semibold">{r.totalUnitsSold}</Td>
-                    <Td align="right" className="text-sm font-semibold text-on-surface">{formatPKR(r.totalRevenue)}</Td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardBody>
         </Card>
       </div>
     </>

@@ -15,14 +15,6 @@ const supplierSchema = new mongoose.Schema({
     minlength: 11,
     maxlength: 14,
   },
-  lastOrder: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
-  },
-  payable: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Payment",
-  },
   pharmacyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Pharmacy",

@@ -8,14 +8,6 @@ export const mapBackendToFrontend = (s) => {
     name: s.name,
     contact: s.contact,
     phone: s.phone,
-    lastOrder: s.lastOrder?.createdAt
-      ? new Date(s.lastOrder.createdAt).toLocaleDateString("en-US", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-      : "—",
-    payable: s.payable?.amount || 0,
     status: s.status === "active" ? "Active" : "Pending",
   };
 };
@@ -62,3 +54,4 @@ export const viewSupplier = async (id) => {
   const response = await api.get(`/admin-suppliers/view-supplier/${id}`);
   return mapBackendToFrontend(response.data?.data);
 };
+

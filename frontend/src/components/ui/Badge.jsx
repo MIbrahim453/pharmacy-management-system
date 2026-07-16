@@ -33,7 +33,7 @@ export default function Badge({ variant = 'default', status, dot, className, chi
   const classes = variants[resolvedVariant] || variants.default;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${classes} ${className || ''}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${classes} ${className || ''}`}>
       {(dot || status) && (
         <span className="h-1.5 w-1.5 rounded-full bg-current" />
       )}

@@ -204,9 +204,9 @@ export default function Inventory() {
               <Th>Category</Th>
               <Th align="right">Stock Qty</Th>
               <Th align="right">Reorder Level</Th>
-              <Th>Earliest Expiry</Th>
-              <Th>Status</Th>
-              <Th>Batches</Th>
+              <Th className="whitespace-nowrap">Earliest Expiry</Th>
+              <Th className="whitespace-nowrap">Status</Th>
+              <Th className="whitespace-nowrap">Batches</Th>
             </tr>
           </thead>
           <tbody>
@@ -270,7 +270,7 @@ export default function Inventory() {
                       >
                         {m.expiry || '—'}
                       </Td>
-                      <Td>
+                      <Td className="whitespace-nowrap">
                         <Badge variant={statusColor(m.status)} dot>
                           {m.status}
                         </Badge>
@@ -301,9 +301,9 @@ export default function Inventory() {
                                     <Th align="right" className="py-2">Cost Price</Th>
                                     <Th align="right" className="py-2">Selling Price</Th>
                                     <Th align="right" className="py-2">Current Stock</Th>
-                                    <Th className="py-2">Expiry Date</Th>
-                                    <Th className="py-2">Status</Th>
-                                    <Th className="py-2">Actions</Th>
+                                    <Th className="py-2 whitespace-nowrap">Expiry Date</Th>
+                                    <Th className="py-2 whitespace-nowrap">Status</Th>
+                                    <Th className="py-2 whitespace-nowrap">Actions</Th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -322,8 +322,8 @@ export default function Inventory() {
                                         <Td align="right" className="tnum font-medium">{formatPKR(b.costPrice)} / {m.saleUnit}</Td>
                                         <Td align="right" className="tnum font-medium">{formatPKR(b.sellingPrice)} / {m.saleUnit}</Td>
                                         <Td align="right" className="tnum font-bold text-primary">{b.currentQty.toLocaleString()} {m.saleUnit}s</Td>
-                                        <Td className="tnum">{b.expiry}</Td>
-                                        <Td>
+                                        <Td className="tnum whitespace-nowrap">{b.expiry}</Td>
+                                        <Td className="whitespace-nowrap">
                                           <Badge
                                             variant={
                                               b.status === 'Active'
@@ -336,7 +336,7 @@ export default function Inventory() {
                                             {b.status}
                                           </Badge>
                                         </Td>
-                                        <Td>
+                                        <Td className="whitespace-nowrap">
                                           <div className="flex items-center gap-1.5">
                                             <button
                                               onClick={() => {

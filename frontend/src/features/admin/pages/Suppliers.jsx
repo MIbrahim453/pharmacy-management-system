@@ -212,15 +212,13 @@ export default function Suppliers() {
               <Th>Supplier</Th>
               <Th>Contact</Th>
               <Th>Phone</Th>
-              <Th>Last order</Th>
-              <Th align="right">Payable</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
             </tr>
           </thead>
           <tbody>
             {paginated.length === 0 ? (
-              <TableEmpty cols={7} message="No suppliers found" icon={<Truck size={32} />} />
+              <TableEmpty cols={5} message="No suppliers found" icon={<Truck size={32} />} />
             ) : (
               paginated.map((s, i) => (
                 <motion.tr
@@ -240,10 +238,6 @@ export default function Suppliers() {
                   <Td className="text-sm">{s.contact}</Td>
                   <Td mono className="text-xs text-on-surface-variant">
                     {s.phone}
-                  </Td>
-                  <Td className="text-xs text-on-surface-variant">{s.lastOrder}</Td>
-                  <Td align="right" className="text-sm font-semibold text-on-surface">
-                    Rs {s.payable.toLocaleString()}
                   </Td>
                   <Td>
                     <Badge status={s.status} dot />
@@ -358,28 +352,6 @@ export default function Suppliers() {
                 <div className="text-sm text-on-surface-variant">{selected?.contact}</div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Phone</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.phone}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Last Order</div>
-                <div className="font-medium text-on-surface mt-0.5">{selected?.lastOrder}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Payable</div>
-                <div className="font-medium text-on-surface mt-0.5">Rs {selected?.payable.toLocaleString()}</div>
-              </div>
-              <div className="rounded-xl bg-surface-container p-3">
-                <div className="text-on-surface-variant text-xs">Status</div>
-                <div className="mt-1">
-                  <Badge status={selected?.status} dot>
-                    {selected?.status}
-                  </Badge>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </Modal>
@@ -459,3 +431,10 @@ export default function Suppliers() {
     </>
   );
 }
+
+
+
+
+
+
+

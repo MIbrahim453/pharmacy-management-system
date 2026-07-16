@@ -87,7 +87,7 @@ const createPurchase = async (userId, data) => {
     total: item.calculatedQty * item.costPrice,
   }));
 
-  const invoiceNumberForInvoice = invoiceNumber || purchaseNumber;
+  const invoiceNumberForInvoice = purchaseNumber;
 
   const invoice = await Invoice.create({
     invoiceNumber: invoiceNumberForInvoice,

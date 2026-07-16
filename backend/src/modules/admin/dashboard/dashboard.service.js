@@ -93,14 +93,7 @@ const dashboardStats = async (userId) => {
     pharmacyId: user.pharmacyId,
     status: "critical",
   });
-  const medBatchExpirySoon = await MedicineBatch.countDocuments({
-    pharmacyId: user.pharmacyId,
-    expiryDate: {
-      $lt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    },
-    status: "active",
-  });
-
+  
   logger.info("Dashboard Stats Fetched Successfully");
 
   return {
@@ -111,7 +104,6 @@ const dashboardStats = async (userId) => {
     totalPendingPayment,
     lowStock,
     critical,
-    medBatchExpirySoon,
   };
 };
 
@@ -172,7 +164,7 @@ const revenueTrends = async (userId, period) => {
           },
         },
         {
-          $project: {
+          $addFields: {
             week: {
               $min: [
                 {
