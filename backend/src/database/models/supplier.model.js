@@ -12,6 +12,8 @@ const supplierSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: true,
+    minlength: 11,
+    maxlength: 14,
   },
   lastOrder: {
     type: mongoose.Schema.Types.ObjectId,
@@ -39,3 +41,4 @@ const supplierSchema = new mongoose.Schema({
 const Supplier = mongoose.model("Supplier", supplierSchema);
 
 export default Supplier;
+

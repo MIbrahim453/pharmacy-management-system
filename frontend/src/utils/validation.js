@@ -169,8 +169,8 @@ export const supplierCreateSchema = yup.object().shape({
     .required("Contact person is required"),
   phone: yup
     .string()
-    .min(6, "Phone must be at least 6 characters")
-    .max(20, "Phone cannot exceed 20 characters")
+    .min(11, "Phone must be at least 11 characters")
+    .max(14, "Phone cannot exceed 14 characters")
     .required("Phone number is required"),
   status: yup
     .string()
@@ -349,10 +349,10 @@ export const pharmacyDetailsSchema = yup.object().shape({
     .default(""),
   phone: yup
     .string()
-    .min(6, "Phone must be at least 6 characters")
-    .max(20, "Phone cannot exceed 20 characters")
-    .optional()
-    .default(""),
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .min(11, "Phone must be at least 11 characters")
+    .max(14, "Phone cannot exceed 14 characters")
+    .optional(),
   address: yup
     .string()
     .min(2, "Address must be at least 2 characters")
@@ -368,3 +368,6 @@ export const pharmacyDetailsSchema = yup.object().shape({
 });
 
 export default yupResolver;
+
+
+

@@ -12,7 +12,7 @@ const posMedicinesQueryValidation = joi.object({
 
 const createInvoiceValidation = joi.object({
   customerName: joi.string().min(2).max(100).required(),
-  customerPhone: joi.string().min(6).max(20).required(),
+  customerPhone: joi.string().trim().min(11).max(14).required(),
   paymentMethod: joi.string().valid("Cash", "Card", "Bank Transfer", "Cheque").required(),
   discount: joi.number().min(0).default(0),
   items: joi

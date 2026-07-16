@@ -30,6 +30,8 @@ const invoiceSchema = new mongoose.Schema(
     customerPhone: {
       type: String,
       required: true,
+      minlength: 11,
+      maxlength: 14,
       default: null
     },
     invoiceType: {
@@ -92,3 +94,4 @@ const invoiceSchema = new mongoose.Schema(
 const Invoice = mongoose.model("Invoice", invoiceSchema);
 
 export default Invoice;
+

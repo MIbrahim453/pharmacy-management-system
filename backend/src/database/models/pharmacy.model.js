@@ -14,6 +14,8 @@ const pharmacySchema = new mongoose.Schema(
     phone: {
       type: String,
       required: false,
+      minlength: 11,
+      maxlength: 14,
     },
     address: {
       type: String,
@@ -63,11 +65,10 @@ const pharmacySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   },
 );
 
 const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);
 
 export default Pharmacy;
+

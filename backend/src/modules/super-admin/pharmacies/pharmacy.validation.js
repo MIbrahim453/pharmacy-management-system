@@ -3,7 +3,7 @@ import joi from "joi";
 const createPharmacyValidation = joi.object({
   pharmacy_name: joi.string().required(),
   email: joi.string().email().required(),
-  phone: joi.string().required(),
+  phone: joi.string().trim().min(11).max(14).required(),
   address: joi.string().required(),
   registrationNumber: joi.string().required(),
   city: joi.string().required(),
@@ -16,7 +16,7 @@ const createPharmacyValidation = joi.object({
 const editPharmacyValidation = joi.object({
   pharmacy_name: joi.string(),
   email: joi.string().email(),
-  phone: joi.string(),
+  phone: joi.string().trim().min(11).max(14),
   address: joi.string(),
   registrationNumber: joi.string(),
   city: joi.string(),
