@@ -91,7 +91,7 @@ export default function PharmaciesPage() {
     setLoading(true);
     try {
       await api.put(`/super-admin-pharmacies/edit-pharmacy/${selected._id}`, data);
-      toast.success(`${data.pharmacy_name} workspace updated!`);
+      toast.success(`${data.pharmacy_name || data.pharmacyName} workspace updated!`);
       setEditModal(false);
       setSelected(null);
       fetchPharmacies();
@@ -106,7 +106,7 @@ export default function PharmaciesPage() {
     setLoading(true);
     try {
       await api.delete(`/super-admin-pharmacies/delete-pharmacy/${selected._id}`);
-      toast.success(`${selected?.pharmacy_name} decommissioned successfully`);
+      toast.success(`${selected?.pharmacy_name || selected?.pharmacyName} decommissioned successfully`);
       setDelModal(false);
       setSelected(null);
       fetchPharmacies();
@@ -124,7 +124,7 @@ export default function PharmaciesPage() {
         status: newStatus,
       });
       toast.success(
-        `${pharmacy.pharmacy_name} is now ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
+        `${pharmacy.pharmacy_name || pharmacy.pharmacyName} is now ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
       );
       fetchPharmacies();
     } catch (error) {
@@ -151,7 +151,7 @@ export default function PharmaciesPage() {
   const openEdit = (p) => {
     setSelected(p);
     resetEdit({
-      pharmacy_name: p.pharmacy_name,
+      pharmacy_name: p.pharmacy_name || p.pharmacyName || '',
       city: p.city,
       registrationNumber: p.registrationNumber || '',
       totalStaff: p.totalStaff || 0,
@@ -223,9 +223,9 @@ export default function PharmaciesPage() {
                   <Td>
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/[0.12] text-primary text-xs font-bold">
-                        {p.pharmacy_name[0]}
+                        {(p.pharmacy_name || p.pharmacyName || '?')[0]}
                       </div>
-                      <span className="font-semibold text-on-surface text-sm">{p.pharmacy_name}</span>
+                      <span className="font-semibold text-on-surface text-sm">{p.pharmacy_name || p.pharmacyName}</span>
                     </div>
                   </Td>
                   <Td className="text-sm">{p.owner?.name || 'N/A'}</Td>
@@ -337,7 +337,7 @@ export default function PharmaciesPage() {
         open={editModal}
         onClose={() => setEditModal(false)}
         title="Edit Pharmacy"
-        subtitle={`Editing workspace for ${selected?.pharmacy_name}`}
+        subtitle={`Editing workspace for ${selected?.pharmacy_name || selected?.pharmacyName}`}
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setEditModal(false)}>
@@ -389,17 +389,17 @@ export default function PharmaciesPage() {
         open={viewModal}
         onClose={() => setViewModal(false)}
         title="Pharmacy Profile"
-        subtitle={selected?.pharmacy_name}
+        subtitle={selected?.pharmacy_name || selected?.pharmacyName}
         size="sm"
       >
         {selected && (
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.12] text-primary text-xl font-bold">
-                {selected?.pharmacy_name?.[0]}
+                {(selected?.pharmacy_name || selected?.pharmacyName)?.[0]}
               </div>
               <div>
-                <div className="text-lg font-semibold text-on-surface">{selected?.pharmacy_name}</div>
+                <div className="text-lg font-semibold text-on-surface">{selected?.pharmacy_name || selected?.pharmacyName}</div>
                 <div className="text-sm text-on-surface-variant">{selected?.city}</div>
               </div>
             </div>
@@ -452,7 +452,7 @@ export default function PharmaciesPage() {
       >
         <div className="p-6">
           <p className="text-sm text-on-surface-variant">
-            Are you sure you want to delete <strong className="text-on-surface">{selected?.pharmacy_name}</strong>?
+            Are you sure you want to delete <strong className="text-on-surface">{selected?.pharmacy_name || selected?.pharmacyName}</strong>?
             This action terminates all user accounts and deletes all branch data.
           </p>
         </div>
