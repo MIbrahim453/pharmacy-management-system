@@ -43,6 +43,105 @@ function formatLabel(raw, period) {
   }
 }
 
+function fillChartGaps(data, period, valueKey) {
+  if (!data || data.length === 0) return [];
+
+  const parsed = data.map(item => {
+    let sortValue;
+    const labelVal = item.label || item._id;
+    if (period === 'Daily') {
+      sortValue = new Date(labelVal).getTime();
+    } else if (period === 'Weekly') {
+      const match = String(labelVal).match(/\d+/);
+      sortValue = match ? parseInt(match[0], 10) : 0;
+    } else if (period === 'Monthly') {
+      sortValue = parseInt(labelVal, 10);
+    } else {
+      sortValue = parseInt(labelVal, 10);
+    }
+    return { ...item, sortValue };
+  });
+
+  parsed.sort((a, b) => a.sortValue - b.sortValue);
+
+  if (parsed.length <= 1) {
+    return parsed;
+  }
+
+  const result = [];
+  const minVal = parsed[0].sortValue;
+  const maxVal = parsed[parsed.length - 1].sortValue;
+
+  if (period === 'Daily') {
+    const lookup = new Map();
+    parsed.forEach(item => {
+      const d = new Date(item.label || item._id);
+      const dateStr = d.toISOString().split('T')[0];
+      lookup.set(dateStr, item);
+    });
+
+    const start = new Date(parsed[0].label || parsed[0]._id);
+    const end = new Date(parsed[parsed.length - 1].label || parsed[parsed.length - 1]._id);
+
+    let current = new Date(start);
+    while (current <= end) {
+      const dateStr = current.toISOString().split('T')[0];
+      const found = lookup.get(dateStr);
+      if (found) {
+        result.push(found);
+      } else {
+        result.push({
+          label: dateStr,
+          [valueKey]: 0,
+        });
+      }
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+  } else if (period === 'Weekly') {
+    const lookup = new Map(parsed.map(item => [item.sortValue, item]));
+    for (let current = minVal; current <= maxVal; current++) {
+      const found = lookup.get(current);
+      if (found) {
+        result.push(found);
+      } else {
+        result.push({
+          label: `Week ${current}`,
+          [valueKey]: 0,
+        });
+      }
+    }
+  } else if (period === 'Monthly') {
+    const lookup = new Map(parsed.map(item => [item.sortValue, item]));
+    for (let current = minVal; current <= maxVal; current++) {
+      const found = lookup.get(current);
+      if (found) {
+        result.push(found);
+      } else {
+        const paddedMonth = String(current).padStart(2, '0');
+        result.push({
+          label: paddedMonth,
+          [valueKey]: 0,
+        });
+      }
+    }
+  } else {
+    const lookup = new Map(parsed.map(item => [item.sortValue, item]));
+    for (let current = minVal; current <= maxVal; current++) {
+      const found = lookup.get(current);
+      if (found) {
+        result.push(found);
+      } else {
+        result.push({
+          label: String(current),
+          [valueKey]: 0,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
   const [signupFilter, setSignupFilter] = useState('Weekly');
@@ -83,13 +182,11 @@ export default function SuperAdminDashboard() {
           `/super-admin-dashboard/sign-up-trends/${signupFilter.toLowerCase()}`,
         );
         const data = res.data.data || [];
-        // Map backend { label, signUp } → chart-friendly { label, signups }
-        const mapped = data
-          .map((item) => ({
-            label: formatLabel(item.label, signupFilter),
-            signups: item.signUp || 0,
-          }))
-          .filter((item) => item.signups > 0);
+        const filled = fillChartGaps(data, signupFilter, 'signUp');
+        const mapped = filled.map((item) => ({
+          label: formatLabel(item.label || item._id, signupFilter),
+          signups: item.signUp || 0,
+        }));
         setTrendData(mapped);
       } catch {
         toast.error('Failed to load sign-up trends');
