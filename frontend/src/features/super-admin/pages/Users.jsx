@@ -218,12 +218,25 @@ export default function UsersPage() {
                     <Badge status={u.status} dot />
                   </Td>
                   <Td>
-                    <button
-                      onClick={() => handleOpenView(u._id)}
-                      className="btn-ghost px-2.5 py-1 text-xs rounded-lg font-medium text-primary hover:bg-primary/[0.08]"
-                    >
-                      View
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenView(u._id)}
+                        className="btn-ghost px-2.5 py-1 text-xs rounded-lg font-medium text-primary hover:bg-primary/[0.08]"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(u._id, u.status === 'active' ? 'suspended' : 'active')}
+                        disabled={currentUser?._id === u._id || currentUser?.id === u._id}
+                        className={`btn-ghost px-2.5 py-1 text-xs rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                          u.status === 'active'
+                            ? 'text-warning hover:bg-warning/[0.08]'
+                            : 'text-success hover:bg-success/[0.08]'
+                        }`}
+                      >
+                        {u.status === 'active' ? 'Suspend' : 'Activate'}
+                      </button>
+                    </div>
                   </Td>
                 </motion.tr>
               ))
