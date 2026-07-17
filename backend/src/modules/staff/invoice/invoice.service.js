@@ -14,7 +14,7 @@ const editInvoice = async (userId, id, data) => {
 
   session.startTransaction();
 
-  const user = await User.findById(userId).session(session);
+  const user = await User.findOne({ _id: userId, status: "active" }).session(session);
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -177,7 +177,7 @@ const getInvoiceForStaff = async (userId, filter = {}) => {
     limit = 10,
     searchTerm = "",
   } = filter;
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -224,7 +224,7 @@ const getInvoiceForStaff = async (userId, filter = {}) => {
 const markPaid = async (userId, invoiceId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  const user = await User.findById(userId).session(session);
+  const user = await User.findOne({ _id: userId, status: "active" }).session(session);
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -278,7 +278,7 @@ const markPaid = async (userId, invoiceId) => {
 };
 
 const viewInvoice = async (userId, invoiceId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -296,7 +296,7 @@ const viewInvoice = async (userId, invoiceId) => {
   return invoice;
 };
 const downloadInvoice = async (userId, invoiceId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }

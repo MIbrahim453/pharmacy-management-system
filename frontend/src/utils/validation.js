@@ -367,6 +367,13 @@ export const pharmacyDetailsSchema = yup.object().shape({
     .optional(),
 });
 
+export const userStatusSchema = yup.object().shape({
+  status: yup
+    .string()
+    .oneOf(["active", "inactive", "suspended"], "Status must be active, inactive, or suspended")
+    .required("Status is required"),
+});
+
 export default yupResolver;
 
 

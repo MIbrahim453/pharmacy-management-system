@@ -7,7 +7,7 @@ import MedicineBatch from "../../../database/models/medicineBatch.model.js";
 import { paymentStats } from "../payments/payment.service.js";
 
 const dashboardStats = async (userId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User not found");
   }
@@ -108,7 +108,7 @@ const dashboardStats = async (userId) => {
 };
 
 const revenueTrends = async (userId, period) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User not found");
   }
@@ -314,7 +314,7 @@ const revenueTrends = async (userId, period) => {
 };
 
 const topSellingMedicines = async (userId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User not found");
   }

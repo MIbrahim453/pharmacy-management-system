@@ -39,7 +39,7 @@ const getMedicines = async (userId, filters = {}) => {
     categories.forEach((item) => catId.push(item._id));
   }
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const medicines = await Medicine.find({
@@ -83,7 +83,7 @@ const createInvoice = async (userId, data) => {
 
   session.startTransaction();
 
-  const user = await User.findById(userId).session(session);
+  const user = await User.findOne({ _id: userId, status: "active" }).session(session);
   if (!user) {
     throw new NotFoundError("User not found");
   }

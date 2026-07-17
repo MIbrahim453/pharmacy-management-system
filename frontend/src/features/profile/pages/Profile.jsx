@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { User as UserIcon, Mail, Lock, Save, Percent, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Save, Percent, ShieldAlert, AlertTriangle, Trash2 } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
+import Modal from '../../../components/ui/Modal';
 import api from '../../../services/axios';
-import { updateProfile } from '../../../store/authSlice';
+import { updateProfile, logoutUser } from '../../../store/authSlice';
 import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema, pharmacyDetailsSchema } from '../../../utils/validation';
 
 function initials(name = '') {
@@ -18,14 +20,19 @@ function initials(name = '') {
 
 export default function Profile() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const reduxUser = useSelector((state) => state.auth.user);
 
   const [saving, setSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [pharmacySaving, setPharmacySaving] = useState(false);
   const [detailsSaving, setDetailsSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pharmacy, setPharmacy] = useState(null);
+
+  const canDeleteAccount = reduxUser?.role === 'admin' || reduxUser?.role === 'staff';
 
   // Profile Form configuration
   const {
@@ -175,6 +182,21 @@ export default function Profile() {
       toast.error(error.response?.data?.message || 'Failed to update pharmacy details');
     } finally {
       setDetailsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const response = await api.delete('/auth/profile');
+      toast.success(response.data?.message || 'Account deleted successfully');
+      setDeleteConfirmOpen(false);
+      await dispatch(logoutUser());
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete account');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -358,7 +380,7 @@ export default function Profile() {
                     type="password"
                     {...registerPw('current')}
                     prefix={<Lock size={16} />}
-                    placeholder="••••••••"
+                    placeholder="Enter current password"
                     error={pwErrors.current?.message}
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -395,10 +417,59 @@ export default function Profile() {
                   </div>
                 </form>
               )}
+
+              {canDeleteAccount && (
+                <div className="mt-6 rounded-2xl border border-error/30 bg-error/[0.06] p-4 sm:p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-error">Delete account</div>
+                      <p className="mt-1 text-sm text-on-surface-variant max-w-xl">
+                        Permanently delete your account and end access to this workspace. This action cannot be undone.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      icon={<Trash2 size={15} />}
+                      onClick={() => setDeleteConfirmOpen(true)}
+                    >
+                      Delete account
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardBody>
           </Card>
         </div>
       </div>
+
+      <Modal
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Delete Account"
+        subtitle="This action is permanent and cannot be undone."
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteAccount} loading={deleting} icon={<Trash2 size={15} />}>
+              Delete account
+            </Button>
+          </div>
+        }
+      >
+        <div className="p-6 space-y-3">
+          <p className="text-sm text-on-surface-variant">
+            Are you sure you want to permanently delete your account?
+          </p>
+          <p className="text-sm text-on-surface-variant">
+            You will be signed out immediately after deletion.
+          </p>
+        </div>
+      </Modal>
     </>
   );
 }

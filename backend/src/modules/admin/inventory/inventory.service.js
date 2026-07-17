@@ -6,7 +6,7 @@ import { syncMedicineStockAndExpiry } from "../../../utils/sync.js";
 import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
 
 const getInventoryStats = async (userId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const userMedicineIds = pharmacyId
@@ -81,7 +81,7 @@ const getInventoryStats = async (userId) => {
 
 // Helper Function
 const getMedicinesWithBatches = async (userId, query = {}) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const medicines = await Medicine.find({ pharmacyId, ...query })
@@ -112,7 +112,7 @@ const getInventory = async (userId) => {
   const today = new Date();
   const next30Days = new Date(today.getDate() + 30);
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
   const userMedicineIds = pharmacyId
     ? await Medicine.find({ pharmacyId }).select("_id")
@@ -157,7 +157,7 @@ const getInventory = async (userId) => {
 };
 
 const getBatchesForMedicine = async (userId, medicineId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const medicine = await Medicine.findOne({ _id: medicineId, pharmacyId });
@@ -181,7 +181,7 @@ const updateBatch = async (userId, batchId, data) => {
   }
 
   const medicine = await Medicine.findById(batch.medicineId);
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
   if (!medicine || medicine.pharmacyId?.toString() !== pharmacyId?.toString()) {
     throw new NotFoundError("Batch Not Found");

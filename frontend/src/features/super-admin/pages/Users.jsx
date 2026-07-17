@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useSelector } from 'react-redux';
 import { Users as UsersIcon, Calendar, Mail, Shield, MapPin, Award, UserCheck, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../../components/common/PageHeader';
@@ -13,6 +14,7 @@ import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import { initials } from '../../../utils/helpers';
 import api from '../../../services/axios';
+import { userStatusSchema } from '../../../utils/validation';
 
 const PER_PAGE = 8;
 const ROLE_FILTERS = ['All', 'Super Admin', 'Admin', 'Staff'];
@@ -48,6 +50,7 @@ function timeAgo(date) {
 }
 
 export default function UsersPage() {
+  const { user: currentUser } = useSelector((state) => state.auth);
   const [query, setQuery] = useState('');
   const [roleF, setRoleF] = useState('All');
   const [page, setPage] = useState(1);
@@ -106,6 +109,24 @@ export default function UsersPage() {
     setViewUser(null);
     setViewUserId(userId);
     setViewOpen(true);
+  };
+
+  const handleStatusChange = async (userId, newStatus) => {
+    if (currentUser?._id === userId || currentUser?.id === userId) {
+      toast.error('You cannot change your own account status');
+      return;
+    }
+    try {
+      await userStatusSchema.validate({ status: newStatus });
+      await api.put(`/super-admin-users/change-status/${userId}`, { status: newStatus });
+      toast.success('User status updated successfully');
+      setViewUser((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setList((prevList) =>
+        prevList.map((u) => (u._id === userId ? { ...u, status: newStatus } : u))
+      );
+    } catch (err) {
+      toast.error(err.message || err.response?.data?.message || 'Failed to update status');
+    }
   };
 
   return (
@@ -194,7 +215,7 @@ export default function UsersPage() {
                   </Td>
                   <Td className="text-xs text-on-surface-variant">{timeAgo(u.lastActive)}</Td>
                   <Td>
-                    <Badge status={u.status === 'active' ? 'Active' : 'Suspended'} dot />
+                    <Badge status={u.status} dot />
                   </Td>
                   <Td>
                     <button
@@ -254,7 +275,7 @@ export default function UsersPage() {
                   >
                     {displayRole(viewUser.role?.name)}
                   </Badge>
-                  <Badge status={viewUser.status === 'active' ? 'Active' : 'Suspended'} dot />
+                  <Badge status={viewUser.status} dot />
                 </div>
               </div>
             </div>
@@ -312,6 +333,34 @@ export default function UsersPage() {
                   <span>Platform Level Account (No associated pharmacy)</span>
                 </div>
               )}
+            </div>
+
+            {/* Account Status Control */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                Account Status Control
+              </h4>
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-outline-variant/60 bg-surface-container/20">
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-on-surface">Update account status</div>
+                  <div className="text-xs text-on-surface-variant">
+                    {currentUser?._id === viewUser._id || currentUser?.id === viewUser._id
+                      ? "You cannot change your own account status."
+                      : "Set whether this user is allowed to login and execute tasks."}
+                  </div>
+                </div>
+                <Select
+                  value={viewUser.status}
+                  onChange={(e) => handleStatusChange(viewUser._id, e.target.value)}
+                  disabled={currentUser?._id === viewUser._id || currentUser?.id === viewUser._id}
+                  options={[
+                    { label: 'Active', value: 'active' },
+                    { label: 'Inactive', value: 'inactive' },
+                    { label: 'Suspended', value: 'suspended' },
+                  ]}
+                  className="w-36 h-9 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
 
             {/* Audit Logs */}

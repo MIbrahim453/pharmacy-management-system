@@ -6,7 +6,7 @@ import { BadRequestError, NotFoundError } from "../../../utils/errors.js";
 import MedicineBatch from "../../../database/models/medicineBatch.model.js";
 
 const addMedicine = async (userId, data) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const existingMedicine = await Medicine.findOne({
@@ -49,7 +49,7 @@ const editMedicine = async (userId, id, data) => {
     throw new NotFoundError("Medicine Not Found");
   }
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
   if (pharmacyId && findMedicine.pharmacyId?.toString() !== pharmacyId.toString()) {
     throw new NotFoundError("Medicine Not Found");
@@ -140,7 +140,7 @@ const getMedicines = async (userId, filters) => {
     });
   }
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
   const medicines = await Medicine.find({

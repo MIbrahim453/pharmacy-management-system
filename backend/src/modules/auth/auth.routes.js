@@ -9,6 +9,7 @@ import {
   changePasswordUser,
   getUser,
   updateProfileUser,
+  deleteAccountUser,
   logoutUser,
 } from "./auth.controller.js";
 import authorizeRole from "../../middlewares/rbac.js";
@@ -64,6 +65,12 @@ router.put(
   authenticate,
   validate(profileValidation),
   updateProfileUser,
+);
+router.delete(
+  "/profile",
+  authenticate,
+  authorizeRole("admin", "staff"),
+  deleteAccountUser,
 );
 router.post("/logout", authenticate, logoutUser);
 

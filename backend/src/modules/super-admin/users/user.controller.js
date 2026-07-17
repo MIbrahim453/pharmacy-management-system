@@ -1,5 +1,6 @@
-import { getUsers, viewUser } from "./user.service.js";
+import { getUsers, viewUser, changeUserStatus } from "./user.service.js";
 import { sendSuccess } from "../../../utils/response.js";
+import { BadRequestError } from "../../../utils/errors.js";
 
 const getAllUsers = async (req, res, next) => {
   try {
@@ -19,4 +20,16 @@ const userView = async (req, res, next) => {
   }
 };
 
-export { getAllUsers, userView };
+const userStatusChange = async (req, res, next) => {
+  try {
+    if (req.user.id === req.params.id) {
+      throw new BadRequestError("You cannot change your own account status");
+    }
+    const result = await changeUserStatus(req.params.id, req.body.status);
+    return sendSuccess(res, result, "User Status Changed Successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { getAllUsers, userView, userStatusChange };

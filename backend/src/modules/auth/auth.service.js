@@ -1,8 +1,17 @@
 import User from "../../database/models/user.model.js";
 import Role from "../../database/models/role.model.js";
+import mongoose from "mongoose";
+import Medicine from "../../database/models/medicine.model.js";
+import MedicineBatch from "../../database/models/medicineBatch.model.js";
+import Invoice from "../../database/models/invoice.model.js";
+import InvoiceBatchAllocation from "../../database/models/invoiceBatchAllocation.model.js";
+import Purchase from "../../database/models/purchase.model.js";
+import Payment from "../../database/models/payment.model.js";
+import Supplier from "../../database/models/supplier.model.js";
 import {
   BadRequestError,
   ConflictError,
+  NotFoundError,
   UnauthorizedError,
 } from "../../utils/errors.js";
 import bcrypt from "bcrypt";
@@ -172,14 +181,14 @@ const generateToken = (user, rememberMe) => {
     },
     config.jwt.refreshSecret,
     {
-      expiresIn: rememberMe ? config.jwt.rememberMeExpiry : config.jwt.refreshSecretExpiry
+      expiresIn: rememberMe ? config.jwt.rememberMeExpiry : config.jwt.refreshSecretExpiry,
     },
   );
 
   return { accessToken, refreshToken };
 };
 
-const login = async (user, rememberMe= false, req) => {
+const login = async (user, rememberMe = false, req) => {
   const token = generateToken(user, rememberMe);
 
   await loginHistory.create({
@@ -188,11 +197,12 @@ const login = async (user, rememberMe= false, req) => {
     userAgent: req.headers["user-agent"],
   });
 
-  await User.findByIdAndUpdate(user.id, {
-    lastActive: new Date(),
-  });
+  await User.findOneAndUpdate(
+    { _id: user.id, status: "active" },
+    { lastActive: new Date() }
+  );
 
-  const userWithRole = await User.findById(user.id)
+  const userWithRole = await User.findOne({ _id: user.id, status: "active" })
     .select("-password")
     .populate("role", "name")
     .populate("pharmacyId");
@@ -207,7 +217,7 @@ const refreshToken = async (refreshTokenValue) => {
   if (!payload || payload.type !== "refresh") {
     throw new UnauthorizedError("Invalid Refresh Token");
   }
-  const user = await User.findById(payload.id)
+  const user = await User.findOne({ _id: payload.id, status: "active" })
     .select("-password")
     .populate("role", "name");
   if (!user) {
@@ -282,7 +292,7 @@ const resetPassword = async (token, password) => {
 };
 
 const changePassword = async (userId, oldPassword, newPassword) => {
-  const user = await User.findById(userId).populate("role", "name");
+  const user = await User.findOne({ _id: userId, status: "active" }).populate("role", "name");
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -297,7 +307,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 };
 
 const getMe = async (userId) => {
-  const user = await User.findById(userId)
+  const user = await User.findOne({ _id: userId, status: "active" })
     .populate("role", "name")
     .populate("pharmacyId", "pharmacyName");
   if (!user) {
@@ -307,7 +317,7 @@ const getMe = async (userId) => {
 };
 
 const updateProfile = async (userId, data) => {
-  const user = await User.findById(userId)
+  const user = await User.findOne({ _id: userId, status: "active" })
     .populate("role", "name")
     .populate("pharmacyId", "pharmacyName");
   if (!user) {
@@ -327,6 +337,55 @@ const updateProfile = async (userId, data) => {
   await user.save();
   return user;
 };
+
+const deleteAccount = async (userId) => {
+  const session = await mongoose.startSession();
+
+  try {
+    let deletedMessage = "Account deleted successfully";
+    let deletedEmail = "";
+
+    await session.withTransaction(async () => {
+      const user = await User.findOne({ _id: userId, status: "active" })
+        .populate("role", "name")
+        .session(session);
+
+      if (!user) {
+        throw new NotFoundError("User Not Found");
+      }
+
+      const role = user.role?.name ?? user.role;
+      const pharmacyId = user.pharmacyId;
+      deletedEmail = user.email;
+
+      if (role === "admin" && pharmacyId) {
+        await Promise.all([
+          User.deleteMany({ pharmacyId }, { session }),
+          Medicine.deleteMany({ pharmacyId }, { session }),
+          MedicineBatch.deleteMany({ pharmacyId }, { session }),
+          InvoiceBatchAllocation.deleteMany({ pharmacyId }, { session }),
+          Invoice.deleteMany({ pharmacyId }, { session }),
+          Purchase.deleteMany({ pharmacyId }, { session }),
+          Payment.deleteMany({ pharmacyId }, { session }),
+          Supplier.deleteMany({ pharmacyId }, { session }),
+          Pharmacy.deleteOne({ _id: pharmacyId }, { session }),
+        ]);
+
+        deletedMessage = "Account and associated pharmacy data deleted successfully";
+      } else {
+        await User.deleteOne({ _id: user._id }, { session });
+      }
+    });
+
+    logger.info(`Account deleted for user :${deletedEmail}`);
+
+    return {
+      message: deletedMessage,
+    };
+  } finally {
+    await session.endSession();
+  }
+};
 export {
   createAdmin,
   createStaff,
@@ -337,4 +396,5 @@ export {
   changePassword,
   getMe,
   updateProfile,
+  deleteAccount,
 };

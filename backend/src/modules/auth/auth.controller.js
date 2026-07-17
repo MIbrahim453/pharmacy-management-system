@@ -8,6 +8,7 @@ import {
   changePassword,
   getMe,
   updateProfile,
+  deleteAccount,
 } from "./auth.service.js";
 import { sendCreated, sendSuccess } from "../../utils/response.js";
 import logger from "../../utils/logger.js";
@@ -97,6 +98,15 @@ const updateProfileUser = async (req, res, next) => {
   }
 };
 
+const deleteAccountUser = async (req, res, next) => {
+  try {
+    const result = await deleteAccount(req.user.id);
+    return sendSuccess(res, result, result.message);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const logoutUser = async (req, res, next) => {
   try {
     return sendSuccess(res, null, "User logged out successfully");
@@ -105,6 +115,7 @@ const logoutUser = async (req, res, next) => {
     next(error);
   }
 };
+
 export {
   signUpAdmin,
   signUpStaff,
@@ -115,5 +126,6 @@ export {
   changePasswordUser,
   getUser,
   updateProfileUser,
+  deleteAccountUser,
   logoutUser,
 };

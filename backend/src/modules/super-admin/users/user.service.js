@@ -1,6 +1,6 @@
 import User from "../../../database/models/user.model.js";
 import Role from "../../../database/models/role.model.js";
-import { NotFoundError } from "../../../utils/errors.js";
+import { NotFoundError, BadRequestError } from "../../../utils/errors.js";
 import logger from "../../../utils/logger.js";
 
 const getUsers = async (query) => {
@@ -94,4 +94,29 @@ const viewUser = async (id) => {
   return user;
 };
 
-export { getUsers, viewUser };
+const changeUserStatus = async (id, status) => {
+  const user = await User.findById(id);
+
+  if (!user) {
+    throw new NotFoundError("User Not Found");
+  }
+
+  if (!['active', 'inactive', 'suspended'].includes(status)) {
+    throw new BadRequestError("Invalid status. Must be active, inactive, or suspended");
+  }
+
+  user.status = status;
+  await user.save();
+
+  const updatedUser = await User.findById(id)
+    .select("-password")
+    .populate({ path: "role", select: "name" })
+    .populate({ path: "pharmacyId", select: "pharmacyName" })
+    .lean();
+
+  logger.info(`User status changed to ${status} for user: ${updatedUser.email}`);
+
+  return updatedUser;
+};
+
+export { getUsers, viewUser, changeUserStatus };

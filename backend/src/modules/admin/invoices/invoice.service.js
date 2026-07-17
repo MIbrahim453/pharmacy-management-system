@@ -14,7 +14,7 @@ const editInvoice = async (userId, id, data) => {
 
   session.startTransaction();
 
-  const user = await User.findById(userId).session(session);
+  const user = await User.findOne({ _id: userId, status: "active" }).session(session);
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -174,7 +174,7 @@ const getAllInvoices = async (userId, filter = {}) => {
     searchTerm = "",
   } = filter;
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -220,7 +220,7 @@ const getAllInvoices = async (userId, filter = {}) => {
 const markPaid = async (userId, invoiceId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  const user = await User.findById(userId).session(session);
+  const user = await User.findOne({ _id: userId, status: "active" }).session(session);
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -274,7 +274,7 @@ const markPaid = async (userId, invoiceId) => {
 };
 
 const viewInvoice = async (userId, invoiceId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -293,7 +293,7 @@ const viewInvoice = async (userId, invoiceId) => {
 };
 
 const downloadInvoice = async (userId, invoiceId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User Not Found");
   }

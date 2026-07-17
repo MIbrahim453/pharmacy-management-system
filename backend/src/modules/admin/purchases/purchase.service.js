@@ -12,7 +12,7 @@ import Supplier from "../../../database/models/supplier.model.js";
 import Payment from "../../../database/models/payment.model.js";
 
 const createPurchase = async (userId, data) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user || !user.pharmacyId) {
     throw new BadRequestError("User is not associated with any pharmacy");
   }
@@ -204,7 +204,7 @@ const getPurchases = async (userId, filters = {}) => {
     order = "desc",
   } = filters;
 
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user || !user.pharmacyId) {
     return [];
   }
@@ -247,7 +247,7 @@ const getPurchases = async (userId, filters = {}) => {
 };
 
 const viewPurchase = async (userId, id) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user || !user.pharmacyId) {
     throw new NotFoundError("Purchase Not Found");
   }

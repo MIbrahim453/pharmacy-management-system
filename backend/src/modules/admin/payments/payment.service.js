@@ -5,7 +5,7 @@ import Invoice from "../../../database/models/invoice.model.js";
 import { BadRequestError } from "../../../utils/errors.js";
 
 const paymentStats = async (userId) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User not found");
   }
@@ -52,7 +52,7 @@ const paymentStats = async (userId) => {
 };
 
 const getPayments = async (userId, filter) => {
-  const user = await User.findById(userId);
+  const user = await User.findOne({ _id: userId, status: "active" });
   if (!user) {
     throw new BadRequestError("User not found");
   }

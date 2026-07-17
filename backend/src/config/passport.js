@@ -21,6 +21,13 @@ const localStrategy = new LocalStrategy(
         });
       }
 
+      if (user.status !== "active") {
+        logger.info(`Login Attempt Failed. User account is ${user.status}`);
+        return done(null, false, {
+          message: `Your account is ${user.status}. Please contact administrator.`,
+        });
+      }
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         logger.info("Login Attempt Failed. Invalid Password");
@@ -48,6 +55,10 @@ const jwtStrategy = new JWTStrategy(jwtOptions, async (payload, done) => {
     if (!user) {
       logger.info("JWT Authentication Failed. Login again");
       return done(null, false);
+    }
+    if (user.status !== "active") {
+      logger.info(`JWT Authentication Failed. User account is ${user.status}`);
+      return done(null, false, { message: `Your account is ${user.status}. Please contact administrator.` });
     }
     return done(null, user);
   } catch (error) {
