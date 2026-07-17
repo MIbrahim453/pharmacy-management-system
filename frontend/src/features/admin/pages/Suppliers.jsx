@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Truck, Eye, Pencil, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Truck, Eye, Pencil, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../../components/common/PageHeader';
 import SearchBar from '../../../components/common/SearchBar';
@@ -22,7 +22,6 @@ import {
 } from '../../../services/supplierService';
 
 const PER_PAGE = 8;
-const ORDER_BLANK = { medicineName: '', quantityPerPack: '', note: '', paymentMethod: 'Bank Transfer' };
 
 export default function Suppliers() {
   const [list, setList] = useState([]);
@@ -32,9 +31,7 @@ export default function Suppliers() {
   const [editModal, setEditModal] = useState(false);
   const [viewModal, setViewModal] = useState(false);
   const [delModal, setDelModal] = useState(false);
-  const [orderModal, setOrderModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [orderForm, setOrderForm] = useState(ORDER_BLANK);
   const [selected, setSelected] = useState(null);
 
   // Add Form Configuration
@@ -91,7 +88,6 @@ export default function Suppliers() {
 
   const filtered = list;
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const orderField = (k, v) => setOrderForm((f) => ({ ...f, [k]: v }));
 
   const openAdd = () => {
     resetAdd({
@@ -163,26 +159,9 @@ export default function Suppliers() {
     }
   };
 
-  const handleOrder = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-    toast.success(`Order placed with ${selected?.name} for ${orderForm.medicineName}`);
-    setOrderModal(false);
-    setSelected(null);
-    setOrderForm(ORDER_BLANK);
-    setLoading(false);
-  };
-
   const openView = (s) => {
     setSelected(s);
     setViewModal(true);
-  };
-
-  const openOrder = (s) => {
-    setSelected(s);
-    setOrderForm({ ...ORDER_BLANK, supplierName: s.name });
-    setOrderModal(true);
   };
 
   return (
@@ -249,9 +228,6 @@ export default function Suppliers() {
                       </button>
                       <button onClick={() => openEdit(s)} className="btn-ghost p-1.5 rounded-lg">
                         <Pencil size={15} />
-                      </button>
-                      <button onClick={() => openOrder(s)} className="btn-ghost p-1.5 rounded-lg text-primary/70 hover:text-primary hover:bg-primary/[0.08]">
-                        <ShoppingCart size={15} />
                       </button>
                       <button onClick={() => openDel(s)} className="btn-ghost p-1.5 rounded-lg text-error/70 hover:text-error hover:bg-error/[0.08]">
                         <Trash2 size={15} />
@@ -354,55 +330,6 @@ export default function Suppliers() {
             </div>
           </div>
         )}
-      </Modal>
-
-      {/* Order Modal */}
-      <Modal
-        open={orderModal}
-        onClose={() => setOrderModal(false)}
-        title="Place Order"
-        subtitle={`Ordering from ${selected?.name}`}
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setOrderModal(false)}>
-              Cancel
-            </Button>
-            <Button form="order-form" type="submit" loading={loading}>
-              Place order
-            </Button>
-          </div>
-        }
-      >
-        <form id="order-form" onSubmit={handleOrder} className="p-6 space-y-4">
-          <Input label="Supplier name" value={selected?.name || ''} disabled />
-          <Input
-            label="Medicine name"
-            value={orderForm.medicineName}
-            onChange={(e) => orderField('medicineName', e.target.value)}
-            required
-            placeholder="e.g. Augmentin 625mg"
-          />
-          <Input
-            label="Quantity per pack"
-            type="number"
-            value={orderForm.quantityPerPack}
-            onChange={(e) => orderField('quantityPerPack', e.target.value)}
-            required
-            min="1"
-          />
-          <Input
-            label="Note"
-            value={orderForm.note}
-            onChange={(e) => orderField('note', e.target.value)}
-            placeholder="Any special instructions…"
-          />
-          <Select
-            label="Payment method"
-            value={orderForm.paymentMethod}
-            onChange={(e) => orderField('paymentMethod', e.target.value)}
-            options={['Bank Transfer', 'Cheque', 'Cash', 'Credit']}
-          />
-        </form>
       </Modal>
 
       {/* Delete Confirmation */}

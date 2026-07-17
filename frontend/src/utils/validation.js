@@ -204,8 +204,7 @@ export const staffEditSchema = staffRegisterSchema;
 export const purchaseCreateSchema = yup.object().shape({
   supplierId: yup.string().required("Supplier is required"),
   purchaseDate: yup
-    .date()
-    .typeError("Please enter a valid purchase date")
+    .string()
     .required("Purchase date is required"),
   paymentMethod: yup
     .string()
@@ -222,8 +221,7 @@ export const purchaseCreateSchema = yup.object().shape({
           .min(1, "Batch number is required")
           .required("Batch number is required"),
         expiryDate: yup
-          .date()
-          .typeError("Please enter a valid expiry date")
+          .string()
           .required("Expiry date is required"),
         purchaseUnit: yup.string().required("Purchase unit is required"),
         purchaseQty: yup
@@ -280,8 +278,7 @@ export const purchaseCreateSchema = yup.object().shape({
 export const batchEditSchema = yup.object().shape({
   batchNumber: yup.string().required("Batch number is required"),
   expiryDate: yup
-    .date()
-    .typeError("Please enter a valid expiry date")
+    .string()
     .required("Expiry date is required"),
   costPrice: yup
     .number()
