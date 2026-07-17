@@ -29,7 +29,7 @@ const editStaff = async (userId, id, data) => {
 
   const staff = await User.findById(updateStaff._id)
     .populate("createdBy", "name email")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId", "pharmacyName");
 
   logger.info("Staff Updated Successfully");
 
@@ -76,7 +76,7 @@ const getStaff = async (filters) => {
     .limit(Number(limit))
     .sort({ updatedAt: sortDirection })
     .populate("createdBy", "name email")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId", "pharmacyName");
 
   logger.info("Staff Fetched Successfully");
 
@@ -86,7 +86,7 @@ const getStaff = async (filters) => {
 const viewStaff = async (id) => {
   const staff = await User.findById(id)
     .populate("createdBy", "name email")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId", "pharmacyName");
 
   if (!staff) {
     throw new NotFoundError("Staff Not Found");
@@ -110,7 +110,7 @@ const changeStatus = async (id, status) => {
     },
   )
     .populate("createdBy", "name email")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId", "pharmacyName");
 
   if (!staff) {
     throw new NotFoundError("Staff Not Found");

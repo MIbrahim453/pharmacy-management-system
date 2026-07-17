@@ -5,7 +5,6 @@ const pharmacySchema = new mongoose.Schema(
     pharmacyName: {
       type: String,
       required: true,
-      alias: "pharmacy_name",
     },
     pharmacyEmail : {
       type: String,
@@ -62,14 +61,12 @@ const pharmacySchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+  },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   },
 );
 
 const Pharmacy = mongoose.model("Pharmacy", pharmacySchema);
 
 export default Pharmacy;
-

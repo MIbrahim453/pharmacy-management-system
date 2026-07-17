@@ -48,7 +48,7 @@ const viewPharmacy = async (id) => {
 };
 
 const getPharmacies = async (filters) => {
-  const { id, pharmacy_name = "", city = "", startIndex = 0, limit = 10, order = "asc", searchTerm = "" } =
+  const { id, pharmacyName = "", city = "", startIndex = 0, limit = 10, order = "asc", searchTerm = "" } =
     filters;
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
   const pharmacies = await Pharmacy.find({
@@ -57,7 +57,7 @@ const getPharmacies = async (filters) => {
       { city: { $regex: searchTerm || "", $options: "i" } },
     ],
     ...(id && { _id: id }),
-    ...(pharmacy_name && { pharmacyName: pharmacy_name }),
+    ...(pharmacyName && { pharmacyName: pharmacyName }),
     ...(city && { city: city }),
   })
     .skip(Number(startIndex))

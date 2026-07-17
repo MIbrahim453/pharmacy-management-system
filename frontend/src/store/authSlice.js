@@ -25,7 +25,7 @@ export const loginUser = createAsyncThunk(
         email: userWithRole.email,
         role: frontendRole,
         pharmacyId: userWithRole.pharmacyId?._id || userWithRole.pharmacyId,
-        pharmacyName: userWithRole.pharmacyId?.pharmacyName || userWithRole.pharmacyId?.pharmacy_name || "",
+        pharmacyName: userWithRole.pharmacyId?.pharmacyName || "",
         staffRole: userWithRole.staffRole,
       };
 
@@ -77,7 +77,7 @@ export const updateProfile = createAsyncThunk(
         ...currentUser,
         name: updatedUser.name,
         email: updatedUser.email,
-        pharmacyName: updatedUser.pharmacyId?.pharmacyName || updatedUser.pharmacyId?.pharmacy_name || currentUser.pharmacyName || "",
+        pharmacyName: updatedUser.pharmacyId?.pharmacyName || currentUser.pharmacyName || "",
       };
 
       // Store updated user details in localStorage
@@ -120,7 +120,7 @@ export const fetchMe = createAsyncThunk(
         email: userWithRole.email,
         role: frontendRole,
         pharmacyId: userWithRole.pharmacyId?._id || userWithRole.pharmacyId,
-        pharmacyName: userWithRole.pharmacyId?.pharmacyName || userWithRole.pharmacyId?.pharmacy_name || "",
+        pharmacyName: userWithRole.pharmacyId?.pharmacyName || "",
         staffRole: userWithRole.staffRole,
       };
 

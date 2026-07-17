@@ -281,7 +281,7 @@ export default function SuperAdminDashboard() {
                 <tr key={p._id}>
                   <Td>
                     <span className="font-semibold text-on-surface">
-                      {p.pharmacy_name || p.pharmacyName}
+                      {p.pharmacyName || p.pharmacyName}
                     </span>
                   </Td>
                   <Td>{p.owner?.name || 'N/A'}</Td>

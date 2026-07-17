@@ -226,7 +226,7 @@ const createInvoice = async (userId, data) => {
   await session.commitTransaction();
   
   const invoice = await Invoice.findById(createdInvoice[0]._id)
-    .populate("pharmacyId", "pharmacy_name address phone")
+    .populate("pharmacyId", "pharmacyName address phone")
     .populate("createdBy", "name staffCounter")
     .populate(
       "items.medicineId",

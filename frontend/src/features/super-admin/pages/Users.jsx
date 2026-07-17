@@ -292,7 +292,7 @@ export default function UsersPage() {
                   <div className="flex items-center gap-2">
                     <Award size={16} className="text-primary" />
                     <span className="text-sm font-bold text-on-surface">
-                      {viewUser.pharmacyId.pharmacy_name}
+                      {viewUser.pharmacyId.pharmacyName}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">

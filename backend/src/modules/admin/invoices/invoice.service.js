@@ -253,7 +253,7 @@ const markPaid = async (userId, invoiceId) => {
   await session.commitTransaction();
 
   const populatedInvoice = await Invoice.findById(invoice._id)
-    .populate("pharmacyId", "pharmacy_name address phone")
+    .populate("pharmacyId", "pharmacyName address phone")
     .populate("createdBy", "name staffCounter")
     .populate(
       "items.medicineId",
@@ -320,4 +320,3 @@ const downloadInvoice = async (userId, invoiceId) => {
 };
 
 export { editInvoice, getAllInvoices, markPaid, viewInvoice, downloadInvoice };
-

@@ -21,7 +21,7 @@ const addSupplier = async (userId, data) => {
   });
 
   const supplier = await Supplier.findById(createSupplier._id)
-    .populate("pharmacyId", "pharmacy_name")
+    .populate("pharmacyId", "pharmacyName")
     .populate("createdBy", "name email");
 
   logger.info("Supplier Added Successfully");
@@ -53,7 +53,7 @@ const editSupplier = async (userId, id, data) => {
   );
 
   const supplier = await Supplier.findById(updateSupplier._id)
-    .populate("pharmacyId", "pharmacy_name")
+    .populate("pharmacyId", "pharmacyName")
     .populate("createdBy", "name email");
 
   logger.info("Supplier Updated Successfully");
@@ -73,7 +73,7 @@ const deleteSupplier = async (id) => {
 
 const viewSupplier = async (id) => {
   const supplier = await Supplier.findById(id)
-    .populate("pharmacyId", "pharmacy_name")
+    .populate("pharmacyId", "pharmacyName")
     .populate("createdBy", "name email");
 
   if (!supplier) {

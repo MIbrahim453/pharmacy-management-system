@@ -46,7 +46,7 @@ const getUsers = async (query) => {
     User.find(filter)
       .select("name email status lastActive role pharmacyId")
       .populate("role", "name")
-      .populate("pharmacyId", "pharmacy_name")
+      .populate("pharmacyId", "pharmacyName")
       .sort(sortObj)
       .skip(skip)
       .limit(limitNum)
@@ -58,7 +58,7 @@ const getUsers = async (query) => {
     _id: u._id,
     name: u.name,
     email: u.email,
-    pharmacyName: u.pharmacyId?.pharmacy_name || null,
+    pharmacyName: u.pharmacyId?.pharmacyName || null,
     lastActive: u.lastActive,
     role: u.role?.name || null,
     status: u.status,
@@ -81,7 +81,7 @@ const viewUser = async (id) => {
     .populate({ path: "role", select: "name description" })
     .populate({
       path: "pharmacyId",
-      select: "pharmacy_name city registrationNumber",
+      select: "pharmacyName city registrationNumber",
     })
     .populate({ path: "createdBy", select: "name email" })
     .lean();

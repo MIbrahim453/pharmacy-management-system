@@ -274,4 +274,3 @@ const viewPurchase = async (userId, id) => {
 };
 
 export { createPurchase, getPurchases, viewPurchase };
-

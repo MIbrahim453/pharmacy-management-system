@@ -72,7 +72,7 @@ const createAdmin = async (user, data) => {
   });
 
   logger.info(
-    `Admin Created with email : ${admin.email} and Pharmacy name: ${pharmacy.pharmacy_name}`,
+    `Admin Created with email : ${admin.email} and Pharmacy name: ${pharmacy.pharmacyName}`,
   );
 
   return {
@@ -86,7 +86,7 @@ const createAdmin = async (user, data) => {
     },
     pharmacy: {
       id: pharmacy._id,
-      pharmacy_name: pharmacy.pharmacy_name,
+      pharmacyName: pharmacy.pharmacyName,
       city: pharmacy.city,
       registrationNumber: pharmacy.registrationNumber,
       owner: pharmacy.owner,
@@ -110,7 +110,7 @@ const createStaff = async (user, data) => {
     throw new BadRequestError("Invalid role");
   }
 
-  const pharmacy = await Pharmacy.findById(pharmacyId).select("pharmacy_name");
+  const pharmacy = await Pharmacy.findById(pharmacyId).select("pharmacyName");
 
   const staff = await User.create({
     name,
@@ -131,7 +131,7 @@ const createStaff = async (user, data) => {
       email,
       password,
       staffRole,
-      pharmacyName: pharmacy?.pharmacy_name,
+      pharmacyName: pharmacy?.pharmacyName,
       loginUrl,
     }),
   });
@@ -309,7 +309,7 @@ const getMe = async (userId) => {
 const updateProfile = async (userId, data) => {
   const user = await User.findById(userId)
     .populate("role", "name")
-    .populate("pharmacyId", "pharmacy_name");
+    .populate("pharmacyId", "pharmacyName");
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
