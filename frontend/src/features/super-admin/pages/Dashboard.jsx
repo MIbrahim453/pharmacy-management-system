@@ -136,13 +136,6 @@ export default function SuperAdminDashboard() {
         actions={
           <>
             <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => toast.info('Export triggered')}
-            >
-              Export report
-            </Button>
-            <Button
               size="sm"
               icon={<Plus size={15} />}
               onClick={() => navigate('/super-admin/pharmacies')}

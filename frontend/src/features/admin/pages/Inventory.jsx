@@ -155,7 +155,6 @@ export default function Inventory() {
       <PageHeader
         title="Inventory"
         subtitle="Monitor product catalog thresholds and track physical medicine batches."
-        actions={<Button size="sm" onClick={() => toast.info('Generating inventory report…')}>Export report</Button>}
       />
 
       {/* KPI Stats Panel */}
