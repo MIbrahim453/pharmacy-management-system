@@ -84,10 +84,12 @@ export default function SuperAdminDashboard() {
         );
         const data = res.data.data || [];
         // Map backend { label, signUp } → chart-friendly { label, signups }
-        const mapped = data.map((item) => ({
-          label: formatLabel(item.label, signupFilter),
-          signups: item.signUp || 0,
-        }));
+        const mapped = data
+          .map((item) => ({
+            label: formatLabel(item.label, signupFilter),
+            signups: item.signUp || 0,
+          }))
+          .filter((item) => item.signups > 0);
         setTrendData(mapped);
       } catch {
         toast.error('Failed to load sign-up trends');

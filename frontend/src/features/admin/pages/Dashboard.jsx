@@ -125,18 +125,20 @@ export default function AdminDashboard() {
   };
 
   // Map backend trend format to recharts format
-  const mappedChartData = trends.map((item) => {
-    let label = item.label || item._id || "—";
-    if (revF === "Daily") {
-      label = getDayName(label);
-    } else if (revF === "Monthly") {
-      label = getMonthName(label);
-    }
-    return {
-      label,
-      revenue: item.revenue || 0,
-    };
-  });
+  const mappedChartData = trends
+    .map((item) => {
+      let label = item.label || item._id || "—";
+      if (revF === "Daily") {
+        label = getDayName(label);
+      } else if (revF === "Monthly") {
+        label = getMonthName(label);
+      }
+      return {
+        label,
+        revenue: item.revenue || 0,
+      };
+    })
+    .filter((item) => item.revenue > 0);
 
   // Dynamic alerts list
   const alertsList = [];
