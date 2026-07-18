@@ -16,7 +16,7 @@ import Pagination from '../../../components/ui/Pagination';
 import api from '../../../services/axios';
 import { yupResolver, onboardPharmacySchema, editPharmacySchema } from '../../../utils/validation';
 
-const PER_PAGE = 8;
+const PER_PAGE = 10;
 
 export default function PharmaciesPage() {
   const [list, setList] = useState([]);
@@ -57,6 +57,8 @@ export default function PharmaciesPage() {
       const response = await api.get('/super-admin-pharmacies/all-pharmacies', {
         params: {
           searchTerm: query,
+          limit: 10,
+          order: 'asc',
         },
       });
       setList(response.data.data || []);

@@ -40,58 +40,82 @@ const REV_LABELS = {
 function fillChartGaps(data, period, valueKey) {
   if (!data || data.length === 0) return [];
 
-  const parsed = data.map(item => {
-    let sortValue;
-    const labelVal = item.label || item._id;
-    if (period === 'Daily') {
-      sortValue = new Date(labelVal).getTime();
-    } else if (period === 'Weekly') {
-      const match = String(labelVal).match(/\d+/);
-      sortValue = match ? parseInt(match[0], 10) : 0;
-    } else if (period === 'Monthly') {
-      sortValue = parseInt(labelVal, 10);
-    } else {
-      sortValue = parseInt(labelVal, 10);
-    }
-    return { ...item, sortValue };
-  });
-
-  parsed.sort((a, b) => a.sortValue - b.sortValue);
-
-  if (parsed.length <= 1) {
-    return parsed;
-  }
-
-  const result = [];
-  const minVal = parsed[0].sortValue;
-  const maxVal = parsed[parsed.length - 1].sortValue;
-
+  // 1. If Daily, return exactly the last 7 days (today - 6 to today)
   if (period === 'Daily') {
     const lookup = new Map();
-    parsed.forEach(item => {
-      const d = new Date(item.label || item._id);
-      const dateStr = d.toISOString().split('T')[0];
-      lookup.set(dateStr, item);
+    data.forEach(item => {
+      const labelVal = item.label || item._id;
+      if (labelVal) {
+        const d = new Date(labelVal);
+        if (!isNaN(d.getTime())) {
+          const dateStr = d.toISOString().split('T')[0];
+          lookup.set(dateStr, item);
+        }
+      }
     });
 
-    const start = new Date(parsed[0].label || parsed[0]._id);
-    const end = new Date(parsed[parsed.length - 1].label || parsed[parsed.length - 1]._id);
-
-    let current = new Date(start);
-    while (current <= end) {
+    const result = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const current = new Date(today);
+      current.setDate(today.getDate() - i);
       const dateStr = current.toISOString().split('T')[0];
       const found = lookup.get(dateStr);
       if (found) {
-        result.push(found);
+        result.push({
+          ...found,
+          label: dateStr
+        });
       } else {
         result.push({
           label: dateStr,
           [valueKey]: 0,
         });
       }
-      current.setUTCDate(current.getUTCDate() + 1);
     }
-  } else if (period === 'Weekly') {
+    return result;
+  }
+
+  // 2. For other periods, parse sortValue safely
+  const parsed = data
+    .map(item => {
+      let sortValue = 0;
+      const labelVal = item.label || item._id;
+      if (labelVal !== undefined && labelVal !== null) {
+        if (period === 'Weekly') {
+          const match = String(labelVal).match(/\d+/);
+          sortValue = match ? parseInt(match[0], 10) : 0;
+        } else {
+          sortValue = parseInt(labelVal, 10) || 0;
+        }
+      }
+      return { ...item, sortValue };
+    })
+    .filter(item => {
+      const labelVal = item.label || item._id;
+      if (period === 'Weekly') {
+        return String(labelVal).startsWith('W') || String(labelVal).startsWith('Week');
+      }
+      if (period === 'Monthly') {
+        const val = parseInt(labelVal, 10);
+        return !isNaN(val) && val >= 1 && val <= 12;
+      }
+      if (period === 'Yearly') {
+        const val = parseInt(labelVal, 10);
+        return !isNaN(val) && val >= 2000;
+      }
+      return true;
+    });
+
+  if (parsed.length === 0) return [];
+  parsed.sort((a, b) => a.sortValue - b.sortValue);
+  if (parsed.length === 1) return parsed;
+
+  const result = [];
+  const minVal = parsed[0].sortValue;
+  const maxVal = parsed[parsed.length - 1].sortValue;
+
+  if (period === 'Weekly') {
     const lookup = new Map(parsed.map(item => [item.sortValue, item]));
     for (let current = minVal; current <= maxVal; current++) {
       const found = lookup.get(current);

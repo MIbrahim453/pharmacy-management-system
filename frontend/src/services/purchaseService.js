@@ -29,7 +29,13 @@ export const createPurchase = async (purchaseData) => {
  * Fetches all purchase logs
  */
 export const getAllPurchases = async (params = {}) => {
-  const response = await api.get("/admin-purchases/all-purchases", { params });
+  const response = await api.get("/admin-purchases/all-purchases", {
+    params: {
+      ...params,
+      limit: 10,
+      order: "asc",
+    },
+  });
   return response.data?.data || [];
 };
 

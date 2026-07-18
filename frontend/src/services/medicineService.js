@@ -63,7 +63,8 @@ export const getAllMedicines = async (searchTerm = "") => {
   const response = await api.get("/admin-medicines/all-medicines", {
     params: {
       searchTerm,
-      limit: 1000,
+      limit: 10,
+      order: "asc",
     },
   });
   const data = response.data?.data || [];

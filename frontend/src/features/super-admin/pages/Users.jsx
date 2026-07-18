@@ -16,7 +16,7 @@ import { initials } from '../../../utils/helpers';
 import api from '../../../services/axios';
 import { userStatusSchema } from '../../../utils/validation';
 
-const PER_PAGE = 8;
+const PER_PAGE = 10;
 const ROLE_FILTERS = ['All', 'Super Admin', 'Admin', 'Staff'];
 
 const roleMap = {
@@ -73,6 +73,7 @@ export default function UsersPage() {
           role: roleMap[roleF],
           page,
           limit: PER_PAGE,
+          order: 'asc',
         },
       });
       setList(res.data.data.users || []);

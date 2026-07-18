@@ -26,7 +26,8 @@ export const getAllSuppliers = async (searchTerm = "") => {
   const response = await api.get("/admin-suppliers/all-suppliers", {
     params: {
       name: searchTerm,
-      limit: 1000, // Fetch all for local client-side pagination
+      limit: 10,
+      order: "asc",
     },
   });
   const data = response.data?.data || [];

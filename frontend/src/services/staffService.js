@@ -51,7 +51,8 @@ export const getAllStaff = async (pharmacyId, searchTerm = "") => {
     params: {
       pharmacyId,
       name: searchTerm,
-      limit: 1000, // Fetch all for local client-side pagination
+      limit: 10,
+      order: "asc",
     },
   });
   const data = response.data?.data || [];
