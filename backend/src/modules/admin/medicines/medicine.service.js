@@ -124,16 +124,18 @@ const getMedicines = async (userId, filters) => {
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
   const filterCatId = [];
   if (category) {
+    const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const categories = await Category.find({
-      name: { $regex: category, $options: "i" },
+      name: { $regex: escapedCategory, $options: "i" },
     }).select("_id");
     categories.forEach((item) => filterCatId.push(item._id));
   }
 
   const searchCatId = [];
   if (searchTerm) {
+    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const categories = await Category.find({
-      name: { $regex: searchTerm, $options: "i" },
+      name: { $regex: escapedSearchTerm, $options: "i" },
     }).select("_id");
     categories.forEach((item) => searchCatId.push(item._id));
   }
@@ -143,15 +145,16 @@ const getMedicines = async (userId, filters) => {
 
   const queryObj = { pharmacyId };
 
-  if (category && filterCatId.length > 0) {
+  if (category) {
     queryObj.category = { $in: filterCatId };
   }
 
   if (searchTerm) {
+    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     queryObj.$or = [
-      { name: { $regex: searchTerm, $options: "i" } },
-      { genericName: { $regex: searchTerm, $options: "i" } },
-      { manufacturer: { $regex: searchTerm, $options: "i" } },
+      { name: { $regex: escapedSearchTerm, $options: "i" } },
+      { genericName: { $regex: escapedSearchTerm, $options: "i" } },
+      { manufacturer: { $regex: escapedSearchTerm, $options: "i" } },
       ...(searchCatId.length > 0 ? [{ category: { $in: searchCatId } }] : []),
     ];
   }
