@@ -122,22 +122,20 @@ const getMedicines = async (userId, filters) => {
   } = filters;
 
   const sortDirection = order ? (order.toLowerCase() === "asc" ? 1 : -1) : -1;
-  const catId = [];
+  const filterCatId = [];
+  if (category) {
+    const categories = await Category.find({
+      name: { $regex: category, $options: "i" },
+    }).select("_id");
+    categories.forEach((item) => filterCatId.push(item._id));
+  }
 
-    if (category) {
-      const categories = await Category.find({
-        name: { $regex: category, $options: "i" },
-      }).select("_id");
-      categories.forEach((item) => catId.push(item._id));
-    }
-
+  const searchCatId = [];
   if (searchTerm) {
     const categories = await Category.find({
       name: { $regex: searchTerm, $options: "i" },
     }).select("_id");
-    categories.forEach((category) => {
-      catId.push(category._id);
-    });
+    categories.forEach((item) => searchCatId.push(item._id));
   }
 
   const user = await User.findOne({ _id: userId, status: "active" });
@@ -145,8 +143,8 @@ const getMedicines = async (userId, filters) => {
 
   const queryObj = { pharmacyId };
 
-  if (category && catId.length > 0) {
-    queryObj.category = { $in: catId };
+  if (category && filterCatId.length > 0) {
+    queryObj.category = { $in: filterCatId };
   }
 
   if (searchTerm) {
@@ -154,6 +152,7 @@ const getMedicines = async (userId, filters) => {
       { name: { $regex: searchTerm, $options: "i" } },
       { genericName: { $regex: searchTerm, $options: "i" } },
       { manufacturer: { $regex: searchTerm, $options: "i" } },
+      ...(searchCatId.length > 0 ? [{ category: { $in: searchCatId } }] : []),
     ];
   }
 
