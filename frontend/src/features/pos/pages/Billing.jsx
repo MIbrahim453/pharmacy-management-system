@@ -11,6 +11,7 @@ import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import { getPosMedicines, getPosCategories, createPosInvoice } from '../../../services/posService';
+import api from '../../../services/axios';
 
 const abbr = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const formatPKR = (n) => 'Rs ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -35,6 +36,7 @@ export default function Billing() {
   const [dosage, setDosage] = useState('1');
   const [days, setDays] = useState('1');
   const [customQty, setCustomQty] = useState('1');
+  const [pharmacy, setPharmacy] = useState(null);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -47,6 +49,21 @@ export default function Billing() {
       }
     };
     fetchCategories();
+  }, []);
+
+  // Fetch pharmacy settings on mount
+  useEffect(() => {
+    const fetchPharmacy = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        if (response.data?.data?.pharmacyId) {
+          setPharmacy(response.data.data.pharmacyId);
+        }
+      } catch (error) {
+        console.error('Failed to fetch pharmacy settings:', error);
+      }
+    };
+    fetchPharmacy();
   }, []);
 
   // Fetch medicines when query, category, or refreshTrigger changes
@@ -79,9 +96,9 @@ export default function Billing() {
   const list = medicines;
 
   const entries = Object.values(cartItems);
-  const DISCOUNT_RATE = 0.05;
+  const discountRate = pharmacy ? (pharmacy.discount ?? 0) / 100 : 0.05;
   const subtotal = entries.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const discount = Math.round(subtotal * DISCOUNT_RATE);
+  const discount = Math.round(subtotal * discountRate);
   const total = subtotal - discount;
 
   const computedQty = useMemo(() => {
@@ -250,7 +267,7 @@ export default function Billing() {
                     </div>
                     <Badge status={out ? 'Expired' : m.stock < 60 ? 'Low stock' : 'In stock'} />
                   </div>
-                  <div className="text-sm font-semibold text-on-surface leading-tight">{m.name}</div>
+                  <div className="text-sm font-semibold text-on-surface leading-tight break-words">{m.name}</div>
                   <div className="text-xs text-on-surface-variant mt-0.5">{m.brand} · {m.category}</div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-bold text-on-surface">{formatPKR(m.price)}<span className="text-[10px] font-normal text-on-surface-variant">/tab</span></span>
@@ -341,7 +358,7 @@ export default function Billing() {
             <div className="border-t border-outline-variant/60 p-4 space-y-2">
               {[
                 ['Subtotal', formatPKR(subtotal), ''],
-                ['Discount (5%)', `−${formatPKR(discount)}`, 'text-primary'],
+                [`Discount (${pharmacy ? (pharmacy.discount ?? 0) : 5}%)`, `−${formatPKR(discount)}`, 'text-primary'],
               ].map(([l, v, cls]) => (
                 <div key={l} className="flex justify-between text-xs">
                   <span className="text-on-surface-variant">{l}</span>

@@ -309,7 +309,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 const getMe = async (userId) => {
   const user = await User.findOne({ _id: userId, status: "active" })
     .populate("role", "name")
-    .populate("pharmacyId", "pharmacyName");
+    .populate("pharmacyId");
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
@@ -319,7 +319,7 @@ const getMe = async (userId) => {
 const updateProfile = async (userId, data) => {
   const user = await User.findOne({ _id: userId, status: "active" })
     .populate("role", "name")
-    .populate("pharmacyId", "pharmacyName");
+    .populate("pharmacyId");
   if (!user) {
     throw new BadRequestError("User Not Found");
   }
