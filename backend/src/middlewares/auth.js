@@ -1,7 +1,7 @@
 import { passport } from "../config/passport.js";
 import logger from "../utils/logger.js";
 import { sendError } from "../utils/response.js";
-
+import { UnauthorizedError } from "../utils/errors.js"
 const authenticateLocal = (req, res, next) => {
   passport.authenticate("local", { session: false }, (err, user, info) => {
     if (err) {
