@@ -16,6 +16,23 @@ import api from '../../../services/axios';
 const abbr = (n) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const formatPKR = (n) => 'Rs ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
+const splitMedicineName = (fullName) => {
+  if (!fullName) return { name: '', strength: '' };
+  const match = fullName.match(/(\d+(?:\.\d+)?\s*(?:mg|g|ml|mcg|iu|%|tabs?|caps?|tablets?|capsules?|sachets?))\s*$/i);
+  if (match) {
+    const strength = match[1];
+    const name = fullName.substring(0, fullName.lastIndexOf(strength)).trim();
+    return { name, strength };
+  }
+  const numMatch = fullName.match(/(\d+(?:\.\d+)?)\s*$/);
+  if (numMatch) {
+    const strength = numMatch[1];
+    const name = fullName.substring(0, fullName.lastIndexOf(strength)).trim();
+    return { name, strength };
+  }
+  return { name: fullName, strength: '' };
+};
+
 const METHOD_ICONS = { Cash: <Banknote size={15} />, Card: <CreditCard size={15} />, 'Bank Transfer': <Wallet size={15} /> };
 
 export default function Billing() {
@@ -267,7 +284,15 @@ export default function Billing() {
                     </div>
                     <Badge status={out ? 'Expired' : m.stock < 60 ? 'Low stock' : 'In stock'} />
                   </div>
-                  <div className="text-sm font-semibold text-on-surface leading-tight break-words">{m.name}</div>
+                  {(() => {
+                    const { name, strength } = splitMedicineName(m.name);
+                    return (
+                      <>
+                        <div className="text-sm font-semibold text-on-surface leading-tight break-words">{name}</div>
+                        {strength && <div className="text-xs font-semibold text-primary mt-0.5">{strength}</div>}
+                      </>
+                    );
+                  })()}
                   <div className="text-xs text-on-surface-variant mt-0.5">{m.brand} · {m.category}</div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-bold text-on-surface">{formatPKR(m.price)}<span className="text-[10px] font-normal text-on-surface-variant">/tab</span></span>

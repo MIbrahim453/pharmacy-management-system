@@ -6,6 +6,7 @@ import { httpLogger } from './utils/httpLogger.js'
 import requestIdMiddleware from './middlewares/requestId.js'
 import router from './routes/index.js'
 import { initializePassport } from './config/passport.js'
+import errorHandler from './middlewares/errorHandler.js'
 
 const app = express()
 
@@ -23,9 +24,11 @@ app.use(express.json())
 app.use(express.urlencoded({extended : true }))
 app.use(cookieParser())
 
+// Initialize passport
 initializePassport()
 
 app.use(router)
 
+app.use(errorHandler)
 
 export default app

@@ -36,6 +36,44 @@ const authLimiter = rateLimiter({
     }
 })
 
+const changePasswordLimiter = rateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    keyGenerator: (req) => req.user?.id || req.ip,
+    message: 'Too many password change attempts please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res, next) => {
+        logger.warn('Password change rate limit reached', {
+            userId: req.user?.id,
+            ip: req.ip,
+            path: req.path,
+            url: req.originalUrl,
+            requestId: req.requestId,
+        })
+        next(new TooManyRequestError('Too many password change attempts please try again later'))
+    }
+})
+
+const pharmacyUpdateLimiter = rateLimiter({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    keyGenerator: (req) => req.user?.id || req.ip,
+    message: 'Too many pharmacy update attempts please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res, next) => {
+        logger.warn('Pharmacy update rate limit reached', {
+            userId: req.user?.id,
+            ip: req.ip,
+            path: req.path,
+            url: req.originalUrl,
+            requestId: req.requestId,
+        })
+        next(new TooManyRequestError('Too many pharmacy update attempts please try again later'))
+    }
+})
+
 const verificationLimiter = rateLimiter({
     windowMs: 10 * 60 * 1000,
     limit: 3,
@@ -73,6 +111,8 @@ const passwordResetLimiter = rateLimiter({
 export {
     defaultLimiter,
     authLimiter,
+    changePasswordLimiter,
+    pharmacyUpdateLimiter,
     verificationLimiter,
     passwordResetLimiter
 }

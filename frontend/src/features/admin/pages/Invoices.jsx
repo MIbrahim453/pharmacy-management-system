@@ -811,184 +811,187 @@ export default function Invoices() {
                 </div>
               </div>
 
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  marginBottom: 20,
-                }}
-              >
-                <thead>
-                  <tr style={{ background: "#f3f4f6" }}>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 12px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        borderBottom: "2px solid #e5e7eb",
-                      }}
-                    >
-                      #
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 12px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        borderBottom: "2px solid #e5e7eb",
-                      }}
-                    >
-                      Medicine
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "10px 12px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        borderBottom: "2px solid #e5e7eb",
-                      }}
-                    >
-                      Qty
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "10px 12px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        borderBottom: "2px solid #e5e7eb",
-                      }}
-                    >
-                      Unit Price
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "10px 12px",
-                        fontSize: 11,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#6b7280",
-                        fontWeight: 600,
-                        borderBottom: "2px solid #e5e7eb",
-                      }}
-                    >
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selected?.itemsList || []).map((item, index) => (
-                    <tr key={item._id || index}>
-                      <td
+              <div style={{ overflowX: "auto", width: "100%" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    minWidth: "500px",
+                    borderCollapse: "collapse",
+                    marginBottom: 20,
+                  }}
+                >
+                  <thead>
+                    <tr style={{ background: "#f3f4f6" }}>
+                      <th
                         style={{
+                          textAlign: "left",
                           padding: "10px 12px",
-                          fontSize: 13,
-                          borderBottom: "1px solid #f3f4f6",
-                        }}
-                      >
-                        {index + 1}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          fontSize: 13,
-                          borderBottom: "1px solid #f3f4f6",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {item.medicineName || item.medicineId?.name || "Unknown"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          fontSize: 13,
-                          borderBottom: "1px solid #f3f4f6",
-                          textAlign: "right",
-                        }}
-                      >
-                        {item.quantity}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          fontSize: 13,
-                          borderBottom: "1px solid #f3f4f6",
-                          textAlign: "right",
-                        }}
-                      >
-                        {formatPKR(item.unitPrice)}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          fontSize: 13,
-                          borderBottom: "1px solid #f3f4f6",
-                          textAlign: "right",
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "#6b7280",
                           fontWeight: 600,
+                          borderBottom: "2px solid #e5e7eb",
                         }}
                       >
-                        {formatPKR(item.total)}
+                        #
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "10px 12px",
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                          borderBottom: "2px solid #e5e7eb",
+                        }}
+                      >
+                        Medicine
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "right",
+                          padding: "10px 12px",
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                          borderBottom: "2px solid #e5e7eb",
+                        }}
+                      >
+                        Qty
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "right",
+                          padding: "10px 12px",
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                          borderBottom: "2px solid #e5e7eb",
+                        }}
+                      >
+                        Unit Price
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "right",
+                          padding: "10px 12px",
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                          borderBottom: "2px solid #e5e7eb",
+                        }}
+                      >
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selected?.itemsList || []).map((item, index) => (
+                      <tr key={item._id || index}>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            fontSize: 13,
+                            borderBottom: "1px solid #f3f4f6",
+                          }}
+                        >
+                          {index + 1}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            fontSize: 13,
+                            borderBottom: "1px solid #f3f4f6",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {item.medicineName || item.medicineId?.name || "Unknown"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            fontSize: 13,
+                            borderBottom: "1px solid #f3f4f6",
+                            textAlign: "right",
+                          }}
+                        >
+                          {item.quantity}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            fontSize: 13,
+                            borderBottom: "1px solid #f3f4f6",
+                            textAlign: "right",
+                          }}
+                        >
+                          {formatPKR(item.unitPrice)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            fontSize: 13,
+                            borderBottom: "1px solid #f3f4f6",
+                            textAlign: "right",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {formatPKR(item.total)}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan="4" style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", color: "#6b7280" }}>
+                        Subtotal
+                      </td>
+                      <td style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", textAlign: "right", color: "#4b5563" }}>
+                        {formatPKR(selected?.subTotal || selected?.amount || 0)}
                       </td>
                     </tr>
-                  ))}
-                  <tr>
-                    <td colSpan="4" style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", color: "#6b7280" }}>
-                      Subtotal
-                    </td>
-                    <td style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", textAlign: "right", color: "#4b5563" }}>
-                      {formatPKR(selected?.subTotal || selected?.amount || 0)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan="4" style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", color: "#6b7280" }}>
-                      Discount
-                    </td>
-                    <td style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", textAlign: "right", color: "#16a34a" }}>
-                      -{formatPKR(selected?.discount || 0)}
-                    </td>
-                  </tr>
-                  <tr style={{ background: "#004f35", color: "white" }}>
-                    <td
-                      colSpan="4"
-                      style={{
-                        padding: "14px 12px",
-                        fontWeight: 700,
-                        fontSize: 15,
-                        border: "none",
-                      }}
-                    >
-                      Net Total
-                    </td>
-                    <td
-                      style={{
-                        padding: "14px 12px",
-                        fontWeight: 700,
-                        fontSize: 15,
-                        border: "none",
-                        textAlign: "right",
-                      }}
-                    >
-                      {formatPKR(selected?.amount || 0)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    <tr>
+                      <td colSpan="4" style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", color: "#6b7280" }}>
+                        Discount
+                      </td>
+                      <td style={{ padding: "8px 12px", fontSize: 13, borderBottom: "1px solid #f3f4f6", textAlign: "right", color: "#16a34a" }}>
+                        -{formatPKR(selected?.discount || 0)}
+                      </td>
+                    </tr>
+                    <tr style={{ background: "#004f35", color: "white" }}>
+                      <td
+                        colSpan="4"
+                        style={{
+                          padding: "14px 12px",
+                          fontWeight: 700,
+                          fontSize: 15,
+                          border: "none",
+                        }}
+                      >
+                        Net Total
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 12px",
+                          fontWeight: 700,
+                          fontSize: 15,
+                          border: "none",
+                          textAlign: "right",
+                        }}
+                      >
+                        {formatPKR(selected?.amount || 0)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
               <div
                 style={{

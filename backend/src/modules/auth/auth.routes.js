@@ -14,6 +14,7 @@ import {
 } from "./auth.controller.js";
 import authorizeRole from "../../middlewares/rbac.js";
 import validate from "../../middlewares/validation.js";
+import { authLimiter, changePasswordLimiter } from "../../middlewares/rateLimiter.js";
 import {
   registerAdminValidation,
   registerStaffValidation,
@@ -21,6 +22,7 @@ import {
   forgotPasswordValidation,
   resetPasswordValidation,
   profileValidation,
+  changePasswordValidation,
 } from "./auth.validation.js";
 import { authenticate, authenticateLocal } from "../../middlewares/auth.js";
 
@@ -42,7 +44,7 @@ router.post(
   signUpStaff,
 );
 
-router.post("/login", validate(loginValidation), authenticateLocal, loginUsers);
+router.post("/login", authLimiter, validate(loginValidation), authenticateLocal, loginUsers);
 
 router.post("/refresh-token", refreshAccessToken);
 
@@ -58,7 +60,13 @@ router.post(
   resetPasswordUser,
 );
 
-router.post("/change-password", authenticate, changePasswordUser);
+router.post(
+  "/change-password",
+  authenticate,
+  changePasswordLimiter,
+  validate(changePasswordValidation),
+  changePasswordUser,
+);
 router.get("/me", authenticate, getUser);
 router.put(
   "/profile",
