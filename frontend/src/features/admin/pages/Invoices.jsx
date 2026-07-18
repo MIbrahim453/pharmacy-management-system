@@ -342,15 +342,6 @@ export default function Invoices() {
       <PageHeader
         title="Invoices"
         subtitle={`${invoices.length} invoices · ${formatPKR(totalUnpaid)} pending payment`}
-        actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => toast.info("Exporting invoices…")}
-          >
-            Export CSV
-          </Button>
-        }
       />
 
       <Card>

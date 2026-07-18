@@ -117,11 +117,7 @@ export default function Login() {
 
       {/* Right panel – form */}
       <div className="flex-1 flex flex-col min-h-dvh">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-outline-variant/60">
-          <span className="text-sm text-on-surface-variant">
-            New to Pharmacy OS?{' '}
-            <button className="text-primary font-medium hover:underline">Request access</button>
-          </span>
+        <div className="flex items-center justify-end px-4 sm:px-6 py-4 border-b border-outline-variant/60">
           <button onClick={toggleTheme} className="btn-ghost p-2 rounded-xl">
             {mode === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
