@@ -31,7 +31,7 @@ export const getAllInvoices = async (role, filters = {}) => {
       searchTerm: filters.searchTerm || "",
       status: filters.status && filters.status !== "All" ? filters.status : undefined,
       limit: 10,
-      order: "asc",
+      order: "desc",
     },
   });
   const data = response.data?.data || [];

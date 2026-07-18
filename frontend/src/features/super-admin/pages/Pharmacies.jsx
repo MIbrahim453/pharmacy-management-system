@@ -58,7 +58,7 @@ export default function PharmaciesPage() {
         params: {
           searchTerm: query,
           limit: 10,
-          order: 'asc',
+          order: 'desc',
         },
       });
       setList(response.data.data || []);

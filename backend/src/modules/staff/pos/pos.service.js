@@ -42,23 +42,25 @@ const getMedicines = async (userId, filters = {}) => {
   const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;
 
-  const medicines = await Medicine.find({
-    pharmacyId,
-    $or: [
-      {
-        name: { $regex: searchTerm || "", $options: "i" },
-      },
-      {
-        genericName: { $regex: searchTerm || "", $options: "i" },
-      },
-      {
-        manufacturer: { $regex: searchTerm || "", $options: "i" },
-      },
-      ...(catId.length > 0 ? [{ category: { $in: catId } }] : []),
-    ],
-    ...(id && { _id: id }),
-    ...(name && { name: name }),
-  })
+  const queryObj = { pharmacyId };
+
+  if (category && catId.length > 0) {
+    queryObj.category = { $in: catId };
+  }
+
+  if (searchTerm) {
+    // Search term matches either name, genericName, manufacturer, or matching category names
+    queryObj.$or = [
+      { name: { $regex: searchTerm, $options: "i" } },
+      { genericName: { $regex: searchTerm, $options: "i" } },
+      { manufacturer: { $regex: searchTerm, $options: "i" } },
+    ];
+  }
+
+  if (id) queryObj._id = id;
+  if (name) queryObj.name = name;
+
+  const medicines = await Medicine.find(queryObj)
     .skip(Number(startIndex))
     .limit(Number(limit))
     .sort({ updatedAt: sortDirection })

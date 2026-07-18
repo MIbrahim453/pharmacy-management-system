@@ -27,7 +27,7 @@ export const getAllSuppliers = async (searchTerm = "") => {
     params: {
       name: searchTerm,
       limit: 10,
-      order: "asc",
+      order: "desc",
     },
   });
   const data = response.data?.data || [];

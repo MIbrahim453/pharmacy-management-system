@@ -64,7 +64,7 @@ export const getAllMedicines = async (searchTerm = "") => {
     params: {
       searchTerm,
       limit: 10,
-      order: "asc",
+      order: "desc",
     },
   });
   const data = response.data?.data || [];

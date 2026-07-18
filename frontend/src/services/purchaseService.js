@@ -33,7 +33,7 @@ export const getAllPurchases = async (params = {}) => {
     params: {
       ...params,
       limit: 10,
-      order: "asc",
+      order: "desc",
     },
   });
   return response.data?.data || [];

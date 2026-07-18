@@ -73,7 +73,7 @@ export default function UsersPage() {
           role: roleMap[roleF],
           page,
           limit: PER_PAGE,
-          order: 'asc',
+          order: 'desc',
         },
       });
       setList(res.data.data.users || []);

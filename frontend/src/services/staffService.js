@@ -52,7 +52,7 @@ export const getAllStaff = async (pharmacyId, searchTerm = "") => {
       pharmacyId,
       name: searchTerm,
       limit: 10,
-      order: "asc",
+      order: "desc",
     },
   });
   const data = response.data?.data || [];
