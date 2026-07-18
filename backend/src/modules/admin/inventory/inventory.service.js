@@ -36,7 +36,7 @@ const getInventoryStats = async (userId) => {
   });
 
   const today = new Date();
-  const next30Days = new Date(today.getDate() + 30);
+  const next30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const inventoryQuery =
     scopedMedicineIds.length > 0
@@ -110,7 +110,7 @@ const getInventory = async (userId) => {
   });
 
   const today = new Date();
-  const next30Days = new Date(today.getDate() + 30);
+  const next30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const user = await User.findOne({ _id: userId, status: "active" });
   const pharmacyId = user?.pharmacyId;

@@ -532,20 +532,36 @@ const generateInvoicePdf = async (invoiceData) => {
           .font("Helvetica-Bold")
           .fontSize(17)
           .fillColor("#000000")
-          .text(pharmacy.name, 115, 38);
+          .text(pharmacy.name, 115, 38, {
+            width: 270,
+            height: 22,
+            ellipsis: true,
+          });
 
         drawLocationIcon(doc, 115, 74);
         doc
           .font("Helvetica")
           .fontSize(8.5)
           .fillColor("#333333")
-          .text(pharmacy.address, 128, 74);
+          .text(pharmacy.address, 128, 74, {
+            width: 250,
+            height: 12,
+            ellipsis: true,
+          });
 
         drawPhoneIcon(doc, 115, 88);
-        doc.font("Helvetica").fontSize(8.5).text(pharmacy.phone, 128, 88);
+        doc.font("Helvetica").fontSize(8.5).text(pharmacy.phone, 128, 88, {
+          width: 250,
+          height: 12,
+          ellipsis: true,
+        });
 
         drawEmailIcon(doc, 115, 102);
-        doc.font("Helvetica").fontSize(8.5).text(pharmacy.email, 128, 102);
+        doc.font("Helvetica").fontSize(8.5).text(pharmacy.email, 128, 102, {
+          width: 250,
+          height: 12,
+          ellipsis: true,
+        });
 
         // Invoice title section
         doc.moveTo(395, 32).lineTo(395, 122).lineWidth(0.8).stroke("#cccccc");
@@ -585,10 +601,17 @@ const generateInvoicePdf = async (invoiceData) => {
         doc.text("Phone         :", 43, boxY + 41);
         doc.text("Address       :", 43, boxY + 57);
 
-        doc
-          .font("Helvetica-Bold")
-          .text(customer.name, 120, boxY + 25)
-          .text(customer.phone, 120, boxY + 41);
+        doc.font("Helvetica-Bold");
+        doc.text(customer.name, 120, boxY + 25, {
+          width: 160,
+          height: 14,
+          ellipsis: true,
+        });
+        doc.text(customer.phone, 120, boxY + 41, {
+          width: 160,
+          height: 14,
+          ellipsis: true,
+        });
 
         doc
           .font("Helvetica")
@@ -611,10 +634,17 @@ const generateInvoicePdf = async (invoiceData) => {
         doc.text("Staff Name :", 313, boxY + 25);
         doc.text("Counter    :", 313, boxY + 41);
 
-        doc
-          .font("Helvetica-Bold")
-          .text(staff.name, 385, boxY + 25)
-          .text(staff.counter, 385, boxY + 41);
+        doc.font("Helvetica-Bold");
+        doc.text(staff.name, 385, boxY + 25, {
+          width: 165,
+          height: 14,
+          ellipsis: true,
+        });
+        doc.text(staff.counter, 385, boxY + 41, {
+          width: 165,
+          height: 14,
+          ellipsis: true,
+        });
 
         // Items table
         const tableY = boxY + boxHeight + 15;
