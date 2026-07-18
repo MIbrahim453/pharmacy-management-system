@@ -21,7 +21,7 @@ export default function Header({ title, crumb, onMenuClick }) {
       {onMenuClick && (
         <button
           onClick={onMenuClick}
-          className="lg:hidden btn-ghost p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container shrink-0 cursor-pointer"
+          className="lg:!hidden btn-ghost p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container shrink-0 cursor-pointer"
           aria-label="Toggle sidebar"
         >
           <Menu size={20} />
