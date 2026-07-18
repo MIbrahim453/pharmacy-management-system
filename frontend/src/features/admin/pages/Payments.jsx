@@ -10,11 +10,17 @@ import Button from '../../../components/ui/Button';
 import { KPICard } from '../../../components/charts/DashboardStats';
 import { formatPKR } from '../../../utils/helpers';
 import { getPayments, getPaymentStats } from '../../../services/paymentService';
+import Pagination from '../../../components/ui/Pagination';
 
 export default function Payments() {
   const [rawPendingPayments, setRawPendingPayments] = useState([]);
   const [rawCollectedPayments, setRawCollectedPayments] = useState([]);
   const [rawSupplierPayments, setRawSupplierPayments] = useState([]);
+
+  const [pendingPage, setPendingPage] = useState(1);
+  const [collectedPage, setCollectedPage] = useState(1);
+  const [supplierPage, setSupplierPage] = useState(1);
+  const PER_PAGE = 5;
   
   const [backendStats, setBackendStats] = useState({
     totalCustomerPendingPayments: 0,
@@ -39,6 +45,9 @@ export default function Payments() {
         setRawPendingPayments(paymentsData.customerPendingPayments || []);
         setRawCollectedPayments(paymentsData.customerCollectedPayments || paymentsData.customerPayments || []);
         setRawSupplierPayments(paymentsData.supplierPayments || []);
+        setPendingPage(1);
+        setCollectedPage(1);
+        setSupplierPage(1);
       }
 
       if (statsData) {
@@ -85,6 +94,10 @@ export default function Payments() {
   const customerPendingList = rawPendingPayments.map(mapToUI);
   const customerCollectedList = rawCollectedPayments.map(mapToUI);
   const supplierList = rawSupplierPayments.map(mapToUI);
+
+  const paginatedPending = customerPendingList.slice((pendingPage - 1) * PER_PAGE, pendingPage * PER_PAGE);
+  const paginatedCollected = customerCollectedList.slice((collectedPage - 1) * PER_PAGE, collectedPage * PER_PAGE);
+  const paginatedSupplier = supplierList.slice((supplierPage - 1) * PER_PAGE, supplierPage * PER_PAGE);
 
   return (
     <>
@@ -151,10 +164,10 @@ export default function Payments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {customerPendingList.length === 0 ? (
+                  {paginatedPending.length === 0 ? (
                     <TableEmpty cols={3} message="No pending payments" icon={<CheckCircle size={28} />} />
                   ) : (
-                    customerPendingList.map((inv) => (
+                    paginatedPending.map((inv) => (
                       <motion.tr 
                         key={inv.invoiceId} 
                         initial={{ opacity: 0 }} 
@@ -174,6 +187,16 @@ export default function Payments() {
                   )}
                 </tbody>
               </Table>
+              {customerPendingList.length > 0 && (
+                <div className="px-5 py-3 border-t border-outline-variant/60">
+                  <Pagination 
+                    page={pendingPage} 
+                    total={customerPendingList.length} 
+                    perPage={PER_PAGE} 
+                    onChange={setPendingPage} 
+                  />
+                </div>
+              )}
             </Card>
 
             {/* Collected Invoices */}
@@ -194,10 +217,10 @@ export default function Payments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {customerCollectedList.length === 0 ? (
+                  {paginatedCollected.length === 0 ? (
                     <TableEmpty cols={4} message="No paid invoices" icon={<CreditCard size={28} />} />
                   ) : (
-                    customerCollectedList.map((inv) => (
+                    paginatedCollected.map((inv) => (
                       <motion.tr 
                         key={inv.invoiceId} 
                         initial={{ opacity: 0 }} 
@@ -218,6 +241,16 @@ export default function Payments() {
                   )}
                 </tbody>
               </Table>
+              {customerCollectedList.length > 0 && (
+                <div className="px-5 py-3 border-t border-outline-variant/60">
+                  <Pagination 
+                    page={collectedPage} 
+                    total={customerCollectedList.length} 
+                    perPage={PER_PAGE} 
+                    onChange={setCollectedPage} 
+                  />
+                </div>
+              )}
             </Card>
           </div>
 
@@ -239,10 +272,10 @@ export default function Payments() {
                 </tr>
               </thead>
               <tbody>
-                {supplierList.length === 0 ? (
+                {paginatedSupplier.length === 0 ? (
                   <TableEmpty cols={6} message="No supplier payments recorded" icon={<Truck size={28} />} />
                 ) : (
-                  supplierList.map((p) => (
+                  paginatedSupplier.map((p) => (
                     <motion.tr 
                       key={p.invoiceId} 
                       initial={{ opacity: 0 }} 
@@ -265,6 +298,16 @@ export default function Payments() {
                 )}
               </tbody>
             </Table>
+            {supplierList.length > 0 && (
+              <div className="px-5 py-3 border-t border-outline-variant/60">
+                <Pagination 
+                  page={supplierPage} 
+                  total={supplierList.length} 
+                  perPage={PER_PAGE} 
+                  onChange={setSupplierPage} 
+                />
+              </div>
+            )}
           </Card>
         </>
       )}
