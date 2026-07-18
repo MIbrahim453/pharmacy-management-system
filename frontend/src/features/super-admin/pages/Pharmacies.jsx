@@ -14,7 +14,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
 import api from '../../../services/axios';
-import { yupResolver, onboardPharmacySchema, editPharmacySchema } from '../../../utils/validation';
+import { yupResolver, onboardPharmacySchema, editPharmacySchema, handleInvalidSubmit } from '../../../utils/validation';
 
 const PER_PAGE = 10;
 
@@ -294,7 +294,7 @@ export default function PharmaciesPage() {
           </div>
         }
       >
-        <form id="pharmacy-form" onSubmit={handleSubmitOnboard(handleCreate)} className="p-6 space-y-4">
+        <form id="pharmacy-form" onSubmit={handleSubmitOnboard(handleCreate, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input
             label="Pharmacy name"
             {...registerOnboard('pharmacyName')}
@@ -351,7 +351,7 @@ export default function PharmaciesPage() {
           </div>
         }
       >
-        <form id="pharmacy-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+        <form id="pharmacy-edit-form" onSubmit={handleSubmitEdit(handleEdit, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input
             label="Pharmacy name"
             {...registerEdit('pharmacyName')}

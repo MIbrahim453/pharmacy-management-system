@@ -1,4 +1,31 @@
 import * as yup from "yup";
+import { toast } from "sonner";
+
+export const handleInvalidSubmit = (errors) => {
+  const errorKeys = Object.keys(errors);
+  if (errorKeys.length > 0) {
+    const findFirstErrorMessage = (errObj) => {
+      if (!errObj) return null;
+      if (typeof errObj.message === "string") return errObj.message;
+      if (Array.isArray(errObj)) {
+        for (const item of errObj) {
+          const msg = findFirstErrorMessage(item);
+          if (msg) return msg;
+        }
+      }
+      if (typeof errObj === "object") {
+        for (const key of Object.keys(errObj)) {
+          const msg = findFirstErrorMessage(errObj[key]);
+          if (msg) return msg;
+        }
+      }
+      return null;
+    };
+
+    const firstMsg = findFirstErrorMessage(errors);
+    toast.error(firstMsg || "Please fill in all required fields");
+  }
+};
 
 // Schema for Login form
 export const loginSchema = yup.object().shape({

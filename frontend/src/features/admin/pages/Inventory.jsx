@@ -13,7 +13,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { KPICard } from '../../../components/charts/DashboardStats';
 import { formatPKR } from '../../../utils/helpers';
-import { yupResolver, batchEditSchema } from '../../../utils/validation';
+import { yupResolver, batchEditSchema, handleInvalidSubmit } from '../../../utils/validation';
 import {
   getInventoryStats,
   getInventoryList,
@@ -408,7 +408,7 @@ export default function Inventory() {
           </div>
         }
       >
-        <form id="batch-edit-form" onSubmit={handleSubmitBatch(handleEditBatchSubmit)} className="p-6 grid grid-cols-2 gap-4">
+        <form id="batch-edit-form" onSubmit={handleSubmitBatch(handleEditBatchSubmit, handleInvalidSubmit)} className="p-6 grid grid-cols-2 gap-4">
           <Input
             label="Batch Number"
             {...registerBatch('batchNumber')}

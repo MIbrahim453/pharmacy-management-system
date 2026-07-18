@@ -13,7 +13,7 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
-import { yupResolver, supplierCreateSchema, supplierEditSchema } from '../../../utils/validation';
+import { yupResolver, supplierCreateSchema, supplierEditSchema, handleInvalidSubmit } from '../../../utils/validation';
 import {
   getAllSuppliers,
   createSupplier,
@@ -260,7 +260,7 @@ export default function Suppliers() {
           </div>
         }
       >
-        <form id="supplier-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 space-y-4">
+        <form id="supplier-form" onSubmit={handleSubmitAdd(handleAdd, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input
             label="Supplier name"
             {...registerAdd('name')}
@@ -292,7 +292,7 @@ export default function Suppliers() {
           </div>
         }
       >
-        <form id="supplier-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+        <form id="supplier-edit-form" onSubmit={handleSubmitEdit(handleEdit, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input
             label="Supplier name"
             {...registerEdit('name')}

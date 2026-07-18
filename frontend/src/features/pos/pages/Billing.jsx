@@ -132,6 +132,22 @@ export default function Billing() {
   };
 
   const confirmAddToCart = () => {
+    if (qtyMode === 'dosage') {
+      if (!dosage || Number(dosage) <= 0) {
+        toast.error('Dosage (tabs/day) is required');
+        return;
+      }
+      if (!days || Number(days) <= 0) {
+        toast.error('Number of days is required');
+        return;
+      }
+    } else {
+      if (!customQty || Number(customQty) <= 0) {
+        toast.error('Quantity is required');
+        return;
+      }
+    }
+
     const newItems = { ...cartItems };
     const name = qtyMed?.name;
     if (!name) return;

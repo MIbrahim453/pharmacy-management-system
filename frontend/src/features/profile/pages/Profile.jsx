@@ -12,7 +12,7 @@ import Badge from '../../../components/ui/Badge';
 import Modal from '../../../components/ui/Modal';
 import api from '../../../services/axios';
 import { updateProfile, logoutUser } from '../../../store/authSlice';
-import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema, pharmacyDetailsSchema } from '../../../utils/validation';
+import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema, pharmacyDetailsSchema, handleInvalidSubmit } from '../../../utils/validation';
 
 function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -250,7 +250,7 @@ export default function Profile() {
           <Card>
             <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
             <CardBody>
-              <form onSubmit={handleSubmitProfile(saveProfile)} className="space-y-4">
+              <form onSubmit={handleSubmitProfile(saveProfile, handleInvalidSubmit)} className="space-y-4">
                 <Input
                   label="Full name"
                   {...registerProfile('name')}
@@ -276,7 +276,7 @@ export default function Profile() {
             <Card>
               <CardHeader><CardTitle>Pharmacy Details</CardTitle></CardHeader>
               <CardBody>
-                <form onSubmit={handleSubmitDetails(savePharmacyDetails)} className="space-y-4">
+                <form onSubmit={handleSubmitDetails(savePharmacyDetails, handleInvalidSubmit)} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label="Pharmacy Email"
@@ -319,7 +319,7 @@ export default function Profile() {
             <Card>
               <CardHeader><CardTitle>Pharmacy Settings</CardTitle></CardHeader>
               <CardBody>
-                <form onSubmit={handleSubmitSettings(savePharmacySettings)} className="space-y-4">
+                <form onSubmit={handleSubmitSettings(savePharmacySettings, handleInvalidSubmit)} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Input
                       label="Default Discount (%)"
@@ -374,7 +374,7 @@ export default function Profile() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmitPw(handleChangePasswordSubmit)} className="space-y-4">
+                <form onSubmit={handleSubmitPw(handleChangePasswordSubmit, handleInvalidSubmit)} className="space-y-4">
                   <Input
                     label="Current password"
                     type="password"

@@ -15,7 +15,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
 import { initials } from '../../../utils/helpers';
-import { yupResolver, staffRegisterSchema, staffEditSchema } from '../../../utils/validation';
+import { yupResolver, staffRegisterSchema, staffEditSchema, handleInvalidSubmit } from '../../../utils/validation';
 import {
   registerStaff,
   getAllStaff,
@@ -276,7 +276,7 @@ export default function Staff() {
           </div>
         }
       >
-        <form id="staff-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 space-y-4">
+        <form id="staff-form" onSubmit={handleSubmitAdd(handleAdd, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input label="Full name" {...registerAdd('name')} required error={addErrors.name?.message} />
           <Input label="Email" type="email" {...registerAdd('email')} required placeholder="staff@pharmacy.pk" error={addErrors.email?.message} />
           <div className="grid grid-cols-2 gap-4">
@@ -301,7 +301,7 @@ export default function Staff() {
           </div>
         }
       >
-        <form id="staff-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 space-y-4">
+        <form id="staff-edit-form" onSubmit={handleSubmitEdit(handleEdit, handleInvalidSubmit)} className="p-6 space-y-4">
           <Input label="Full name" {...registerEdit('name')} required error={editErrors.name?.message} />
           <Input label="Email" type="email" {...registerEdit('email')} required placeholder="staff@pharmacy.pk" disabled error={editErrors.email?.message} />
           <div className="grid grid-cols-2 gap-4">

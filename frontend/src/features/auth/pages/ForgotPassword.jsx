@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, Stethoscope, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '../../../services/axios';
-import { yupResolver, forgotPasswordSchema } from '../../../utils/validation';
+import { yupResolver, forgotPasswordSchema, handleInvalidSubmit } from '../../../utils/validation';
 import Button from '../../../components/ui/Button';
 
 export default function ForgotPassword() {
@@ -78,7 +78,7 @@ export default function ForgotPassword() {
             <p className="mt-1.5 text-sm text-on-surface-variant">
               Enter your email address and we'll send you a reset link.
             </p>
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit, handleInvalidSubmit)} className="mt-6 space-y-4">
               {apiError && (
                 <div className="flex items-start gap-2 rounded-xl bg-error/[0.08] border border-error/30 p-3 text-xs text-error">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />

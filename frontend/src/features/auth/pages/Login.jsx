@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../../hooks/useTheme';
 import { loginUser, clearError } from '../../../store/authSlice';
-import { yupResolver, loginSchema } from '../../../utils/validation';
+import { yupResolver, loginSchema, handleInvalidSubmit } from '../../../utils/validation';
 import Button from '../../../components/ui/Button';
 
 const FEATURES = [
@@ -142,7 +142,7 @@ export default function Login() {
               Sign in to your Pharmacy OS workspace.
             </p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit, handleInvalidSubmit)} className="mt-8 space-y-4">
               {error && (
                 <div className="flex items-start gap-2 rounded-xl bg-error/[0.08] border border-error/30 p-3 text-xs text-error">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />

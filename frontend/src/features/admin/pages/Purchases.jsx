@@ -14,7 +14,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
 import { formatPKR } from '../../../utils/helpers';
-import { yupResolver, purchaseCreateSchema, medicineCreateSchema } from '../../../utils/validation';
+import { yupResolver, purchaseCreateSchema, medicineCreateSchema, handleInvalidSubmit } from '../../../utils/validation';
 import { getAllPurchases, createPurchase, viewPurchase } from '../../../services/purchaseService';
 import { getAllMedicines, createMedicine, getCategoryNames } from '../../../services/medicineService';
 import { getAllSuppliers } from '../../../services/supplierService';
@@ -347,7 +347,7 @@ export default function Purchases() {
           </div>
         }
       >
-        <form id="purchase-form" onSubmit={handleSubmit(handleAddPurchase)} className="p-6 space-y-5">
+        <form id="purchase-form" onSubmit={handleSubmit(handleAddPurchase, handleInvalidSubmit)} className="p-6 space-y-5">
           <div className="grid grid-cols-3 gap-4">
             <Select
               label="Supplier"
@@ -710,7 +710,7 @@ export default function Purchases() {
           </div>
         }
       >
-        <form id="med-quick-form" onSubmit={handleSubmitMed(handleAddMedicine)} className="p-6 grid grid-cols-2 gap-4">
+        <form id="med-quick-form" onSubmit={handleSubmitMed(handleAddMedicine, handleInvalidSubmit)} className="p-6 grid grid-cols-2 gap-4">
           <Input
             label="Name"
             {...registerMed('name')}

@@ -14,7 +14,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
 import { formatPKR } from '../../../utils/helpers';
-import { yupResolver, medicineCreateSchema, medicineEditSchema } from '../../../utils/validation';
+import { yupResolver, medicineCreateSchema, medicineEditSchema, handleInvalidSubmit } from '../../../utils/validation';
 import {
   getAllMedicines,
   createMedicine,
@@ -336,7 +336,7 @@ export default function Medicines() {
           </div>
         }
       >
-        <form id="medicine-form" onSubmit={handleSubmitAdd(handleAdd)} className="p-6 grid grid-cols-2 gap-4">
+        <form id="medicine-form" onSubmit={handleSubmitAdd(handleAdd, handleInvalidSubmit)} className="p-6 grid grid-cols-2 gap-4">
           <Input
             label="Name"
             {...registerAdd('name')}
@@ -398,7 +398,7 @@ export default function Medicines() {
           </div>
         }
       >
-        <form id="medicine-edit-form" onSubmit={handleSubmitEdit(handleEdit)} className="p-6 grid grid-cols-2 gap-4">
+        <form id="medicine-edit-form" onSubmit={handleSubmitEdit(handleEdit, handleInvalidSubmit)} className="p-6 grid grid-cols-2 gap-4">
           <div className="col-span-2 grid grid-cols-3 gap-3 bg-surface-container/40 p-3 rounded-xl border border-outline-variant/30 text-xs">
             <div>
               <span className="text-on-surface-variant block font-medium">Total Stock</span>
