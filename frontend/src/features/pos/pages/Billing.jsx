@@ -54,6 +54,7 @@ export default function Billing() {
   const [days, setDays] = useState('1');
   const [customQty, setCustomQty] = useState('1');
   const [pharmacy, setPharmacy] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
 
   // Fetch categories on mount
   useEffect(() => {
@@ -176,14 +177,25 @@ export default function Billing() {
   };
 
   const checkout = async () => {
+    const errors = {};
     if (!customerName.trim()) {
-      toast.error('Customer name is required');
+      errors.customerName = 'Customer name is required';
+    }
+    const cleanPhone = customerMobile.trim();
+    if (!cleanPhone) {
+      errors.customerMobile = 'Customer mobile number is required';
+    } else if (cleanPhone.length < 11 || cleanPhone.length > 14) {
+      errors.customerMobile = 'Customer mobile number should be min 11 or max 14 digits';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
       return;
     }
-    if (!customerMobile.trim()) {
-      toast.error('Customer mobile number is required');
-      return;
-    }
+    setFormErrors({});
+
     if (entries.length === 0) {
       toast.error('Cart is empty');
       return;
@@ -210,6 +222,7 @@ export default function Billing() {
       clearCart();
       setCustomerName('');
       setCustomerMobile('');
+      setFormErrors({});
       setDone(true);
       setTimeout(() => setDone(false), 2000);
       
@@ -330,13 +343,25 @@ export default function Billing() {
               label="Customer name"
               placeholder="e.g. Salim Akhtar"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                if (formErrors.customerName) {
+                  setFormErrors((prev) => ({ ...prev, customerName: '' }));
+                }
+              }}
+              error={formErrors.customerName}
             />
             <Input
               label="Customer mobile number"
               placeholder="e.g. 0300-1234567"
               value={customerMobile}
-              onChange={(e) => setCustomerMobile(e.target.value)}
+              onChange={(e) => {
+                setCustomerMobile(e.target.value);
+                if (formErrors.customerMobile) {
+                  setFormErrors((prev) => ({ ...prev, customerMobile: '' }));
+                }
+              }}
+              error={formErrors.customerMobile}
             />
           </div>
 
@@ -389,6 +414,13 @@ export default function Billing() {
                   <span className="text-xs font-bold text-on-surface w-16 text-right shrink-0">
                     {formatPKR(e.price * e.qty)}
                   </span>
+                  <button
+                    onClick={() => changeQty(e.name, -e.qty)}
+                    className="flex h-6 w-6 items-center justify-center rounded-lg text-on-surface-variant/40 hover:bg-error/[0.12] hover:text-error transition-colors shrink-0"
+                    title="Remove item"
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </motion.div>
               ))}
             </AnimatePresence>

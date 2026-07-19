@@ -13,7 +13,13 @@ const validate = (schema) => async (req,res,next) => {
       requestId: req.requestId,
     });
 
-    return next(new ValidationError("Validation failed", error.details));
+    const detailedMessage = error.details.map(detail => {
+      let msg = detail.message.replace(/"/g, '');
+      msg = msg.charAt(0).toUpperCase() + msg.slice(1);
+      return msg;
+    }).join('. ');
+
+    return next(new ValidationError(detailedMessage, error.details));
   }
 
   req.body = value;

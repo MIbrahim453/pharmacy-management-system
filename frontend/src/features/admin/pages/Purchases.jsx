@@ -477,7 +477,7 @@ export default function Purchases() {
                           type="number"
                           step="0.01"
                           {...register(`items.${idx}.costPrice`)}
-                          placeholder="generic"
+                          placeholder="Cost Price"
                           error={errors.items?.[idx]?.costPrice?.message}
                         />
                       </div>
@@ -487,7 +487,7 @@ export default function Purchases() {
                           type="number"
                           step="0.01"
                           {...register(`items.${idx}.sellingPrice`)}
-                          placeholder="generic"
+                          placeholder="Selling Price"
                           error={errors.items?.[idx]?.sellingPrice?.message}
                         />
                       </div>
@@ -756,3 +756,5 @@ export default function Purchases() {
     </>
   );
 }
+
+

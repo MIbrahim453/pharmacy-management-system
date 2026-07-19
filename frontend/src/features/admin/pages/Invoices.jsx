@@ -51,6 +51,7 @@ export default function Invoices() {
   const [form, setForm] = useState(BLANK);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const invoiceRef = useRef(null);
 
   // Searchable Medicine Dropdown States
@@ -207,6 +208,25 @@ export default function Invoices() {
   const handleEdit = async (e) => {
     e.preventDefault();
     if (!selected) return;
+
+    const errors = {};
+    if (!form.customer.trim()) {
+      errors.customer = "Customer name is required";
+    }
+    const cleanPhone = form.customerPhone.trim();
+    if (!cleanPhone) {
+      errors.customerPhone = "Customer phone number is required";
+    } else if (cleanPhone.length < 11 || cleanPhone.length > 14) {
+      errors.customerPhone = "Customer phone number should be min 11 or max 14 digits";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
+      return;
+    }
+    setFormErrors({});
     
     if (!form.itemsList || form.itemsList.length === 0) {
       toast.error("Invoice must contain at least one item");
@@ -216,8 +236,8 @@ export default function Invoices() {
     setLoading(true);
     try {
       const payload = {
-        customerName: form.customer,
-        customerPhone: form.customerPhone,
+        customerName: form.customer.trim(),
+        customerPhone: form.customerPhone.trim(),
         paymentMethod: form.method,
         discount: Number(form.discount) || 0,
         items: (form.itemsList || []).map((item) => ({
@@ -240,6 +260,7 @@ export default function Invoices() {
       setEditModal(false);
       setSelected(null);
       setForm(BLANK);
+      setFormErrors({});
     } catch (error) {
       console.error("Failed to edit invoice:", error);
       toast.error(error.response?.data?.message || "Failed to update invoice");
@@ -277,6 +298,7 @@ export default function Invoices() {
       method: inv.method,
       status: inv.status,
     });
+    setFormErrors({});
     setEditModal(true);
   };
 
@@ -529,15 +551,27 @@ export default function Invoices() {
           <Input
             label="Customer name"
             value={form.customer}
-            onChange={(e) => field("customer", e.target.value)}
+            onChange={(e) => {
+              field("customer", e.target.value);
+              if (formErrors.customer) {
+                setFormErrors((prev) => ({ ...prev, customer: "" }));
+              }
+            }}
             required
+            error={formErrors.customer}
           />
           <Input
             label="Customer phone"
             value={form.customerPhone}
-            onChange={(e) => field("customerPhone", e.target.value)}
+            onChange={(e) => {
+              field("customerPhone", e.target.value);
+              if (formErrors.customerPhone) {
+                setFormErrors((prev) => ({ ...prev, customerPhone: "" }));
+              }
+            }}
             required
             placeholder="e.g. 03001234567"
+            error={formErrors.customerPhone}
           />
 
           {/* Medicines with Qty and Price Editor */}
