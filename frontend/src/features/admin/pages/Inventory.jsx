@@ -11,6 +11,7 @@ import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import DemoModal from '../../../components/common/DemoModal';
 import { KPICard } from '../../../components/charts/DashboardStats';
 import { formatPKR } from '../../../utils/helpers';
 import { yupResolver, batchEditSchema, handleInvalidSubmit } from '../../../utils/validation';
@@ -47,6 +48,7 @@ export default function Inventory() {
   
   const [editModal, setEditModal] = useState(false);
   const [discardModal, setDiscardModal] = useState(false);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -362,7 +364,7 @@ export default function Inventory() {
                                                 onClick={() => {
                                                   setSelectedBatch(b);
                                                   setSelectedMedicine(m);
-                                                  setDiscardModal(true);
+                                                  setDemoModalOpen(true);
                                                 }}
                                                 className="btn-ghost p-1 rounded hover:bg-error/8 text-error/70 hover:text-error"
                                                 title="Discard Batch"
@@ -484,6 +486,12 @@ export default function Inventory() {
           </p>
         </div>
       </Modal>
+
+      <DemoModal
+        open={demoModalOpen}
+        onClose={() => setDemoModalOpen(false)}
+        actionName="Discarding or deleting medicine batches"
+      />
     </>
   );
 }

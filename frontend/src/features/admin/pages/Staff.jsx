@@ -14,6 +14,7 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import Pagination from '../../../components/ui/Pagination';
+import DemoModal from '../../../components/common/DemoModal';
 import { initials } from '../../../utils/helpers';
 import { yupResolver, staffRegisterSchema, staffEditSchema, handleInvalidSubmit } from '../../../utils/validation';
 import {
@@ -35,6 +36,7 @@ export default function Staff() {
   const [editModal, setEditModal] = useState(false);
   const [viewModal, setViewModal] = useState(false);
   const [delModal, setDelModal] = useState(false);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
 
@@ -158,7 +160,7 @@ export default function Staff() {
 
   const openDel = (s) => {
     setSelected(s);
-    setDelModal(true);
+    setDemoModalOpen(true);
   };
 
   const handleDelete = async () => {
@@ -375,6 +377,12 @@ export default function Staff() {
           </p>
         </div>
       </Modal>
+
+      <DemoModal
+        open={demoModalOpen}
+        onClose={() => setDemoModalOpen(false)}
+        actionName="Deleting staff members"
+      />
     </>
   );
 }

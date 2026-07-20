@@ -12,6 +12,7 @@ import Badge from '../../../components/ui/Badge';
 import Modal from '../../../components/ui/Modal';
 import api from '../../../services/axios';
 import { updateProfile, logoutUser } from '../../../store/authSlice';
+import DemoModal from '../../../components/common/DemoModal';
 import { yupResolver, profileSchema, changePasswordSchema, pharmacySettingsSchema, pharmacyDetailsSchema, handleInvalidSubmit } from '../../../utils/validation';
 
 function initials(name = '') {
@@ -31,7 +32,10 @@ export default function Profile() {
   const [showChangePw, setShowChangePw] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pharmacy, setPharmacy] = useState(null);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [demoAction, setDemoAction] = useState('');
 
+  const isDemoAccount = reduxUser?.role === 'admin' || reduxUser?.role === 'staff';
   const canDeleteAccount = reduxUser?.role === 'admin' || reduxUser?.role === 'staff';
 
   // Profile Form configuration
@@ -367,7 +371,14 @@ export default function Profile() {
                   </p>
                   <Button
                     type="button"
-                    onClick={() => setShowChangePw(true)}
+                    onClick={() => {
+                      if (isDemoAccount) {
+                        setDemoAction('Changing password');
+                        setDemoModalOpen(true);
+                      } else {
+                        setShowChangePw(true);
+                      }
+                    }}
                     icon={<Lock size={15} />}
                   >
                     Change Password
@@ -432,7 +443,14 @@ export default function Profile() {
                       variant="danger"
                       size="sm"
                       icon={<Trash2 size={15} />}
-                      onClick={() => setDeleteConfirmOpen(true)}
+                      onClick={() => {
+                        if (isDemoAccount) {
+                          setDemoAction('Deleting account');
+                          setDemoModalOpen(true);
+                        } else {
+                          setDeleteConfirmOpen(true);
+                        }
+                      }}
                     >
                       Delete account
                     </Button>
@@ -470,6 +488,12 @@ export default function Profile() {
           </p>
         </div>
       </Modal>
+
+      <DemoModal
+        open={demoModalOpen}
+        onClose={() => setDemoModalOpen(false)}
+        actionName={demoAction}
+      />
     </>
   );
 }
