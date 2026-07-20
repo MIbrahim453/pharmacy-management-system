@@ -118,6 +118,11 @@ export default function Profile() {
   }, [resetProfile, resetSettings, resetDetails]);
 
   const saveProfile = async (data) => {
+    if (isDemoAccount && data.email !== reduxUser?.email) {
+      setDemoAction('Changing email address');
+      setDemoModalOpen(true);
+      return;
+    }
     setSaving(true);
     try {
       const result = await dispatch(updateProfile({ name: data.name, email: data.email }));
@@ -172,6 +177,11 @@ export default function Profile() {
   };
 
   const savePharmacyDetails = async (data) => {
+    if (isDemoAccount && data.pharmacyEmail !== (pharmacy?.pharmacyEmail ?? '')) {
+      setDemoAction('Changing pharmacy email address');
+      setDemoModalOpen(true);
+      return;
+    }
     setDetailsSaving(true);
     try {
       const response = await api.put('/admin-profile/pharmacy-detail', {
@@ -261,13 +271,16 @@ export default function Profile() {
                   prefix={<UserIcon size={16} />}
                   error={profileErrors.name?.message}
                 />
-                <Input
-                  label="Email address"
-                  type="email"
-                  {...registerProfile('email')}
-                  prefix={<Mail size={16} />}
-                  error={profileErrors.email?.message}
-                />
+                <div onClick={() => { if (isDemoAccount) { setDemoAction('Changing email address'); setDemoModalOpen(true); } }}>
+                  <Input
+                    label="Email address"
+                    type="email"
+                    {...registerProfile('email')}
+                    prefix={<Mail size={16} />}
+                    disabled={isDemoAccount}
+                    error={profileErrors.email?.message}
+                  />
+                </div>
                 <div className="flex justify-end">
                   <Button type="submit" size="sm" loading={saving} icon={<Save size={15} />}>Save changes</Button>
                 </div>
@@ -282,13 +295,16 @@ export default function Profile() {
               <CardBody>
                 <form onSubmit={handleSubmitDetails(savePharmacyDetails, handleInvalidSubmit)} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label="Pharmacy Email"
-                      type="email"
-                      {...registerDetails('pharmacyEmail')}
-                      prefix={<Mail size={16} />}
-                      error={detailsErrors.pharmacyEmail?.message}
-                    />
+                    <div onClick={() => { if (isDemoAccount) { setDemoAction('Changing pharmacy email address'); setDemoModalOpen(true); } }}>
+                      <Input
+                        label="Pharmacy Email"
+                        type="email"
+                        {...registerDetails('pharmacyEmail')}
+                        prefix={<Mail size={16} />}
+                        disabled={isDemoAccount}
+                        error={detailsErrors.pharmacyEmail?.message}
+                      />
+                    </div>
                     <Input
                       label="Pharmacy Phone"
                       type="text"
